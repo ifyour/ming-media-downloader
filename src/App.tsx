@@ -185,7 +185,6 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="logo-area">
-          <div className="glowing-orb"></div>
           <span className="logo-text">⚡ Ming Media Downloader</span>
         </div>
         <p className="subtitle">

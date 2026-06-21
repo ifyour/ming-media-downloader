@@ -57,17 +57,6 @@ body {
   padding: 8px 16px;
 }
 
-.glowing-orb {
-  position: absolute;
-  width: 140%;
-  height: 140%;
-  background: var(--primary-glow);
-  filter: blur(20px);
-  z-index: -1;
-  border-radius: 50%;
-  animation: pulse 4s infinite alternate;
-}
-
 .logo-text {
   font-family: var(--heading);
   font-size: 32px;
