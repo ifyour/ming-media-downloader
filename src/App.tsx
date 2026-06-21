@@ -45,6 +45,7 @@ function App() {
   const [result, setResult] = useState<MediaResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>('');
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
 
   // Load download history from localStorage
   useEffect(() => {
@@ -128,20 +129,48 @@ function App() {
     }
   };
 
-  const triggerDownload = (url: string, quality: string) => {
-    if (!result) return;
+  const triggerDownload = async (url: string, quality: string) => {
+    if (!result || downloadingKey) return;
+    const key = `video_${quality}`;
+    setDownloadingKey(key);
     const filename = `${result.platform}_${result.id}_${quality}.mp4`;
-    // Use worker proxy to force browser download instead of playing
     const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`;
-    window.open(downloadUrl, '_blank');
+    await fetchAndSave(downloadUrl, filename);
+    setDownloadingKey(null);
   };
 
-  const downloadImage = (url: string, index: number) => {
-    if (!result) return;
+  const downloadImage = async (url: string, index: number) => {
+    if (!result || downloadingKey) return;
+    const key = `img_${index}`;
+    setDownloadingKey(key);
     const extension = url.includes('.png') ? 'png' : 'jpg';
     const filename = `${result.platform}_${result.id}_img_${index + 1}.${extension}`;
     const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`;
-    window.open(downloadUrl, '_blank');
+    await fetchAndSave(downloadUrl, filename);
+    setDownloadingKey(null);
+  };
+
+  // Fetch resource as blob and trigger browser download without opening a new tab
+  const fetchAndSave = async (downloadUrl: string, filename: string) => {
+    try {
+      const res = await fetch(downloadUrl);
+      if (!res.ok) throw new Error(`Download failed (HTTP ${res.status})`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
+    } catch (err: any) {
+      console.error('Download error:', err);
+      alert(`下载失败: ${err.message}`);
+    }
   };
 
   const handleHistoryClick = (url: string) => {
@@ -275,9 +304,10 @@ function App() {
                             <button
                               type="button"
                               onClick={() => triggerDownload(format.url, format.quality)}
+                              disabled={!!downloadingKey}
                               className="download-btn-small"
                             >
-                              下载 MP4
+                              {downloadingKey === `video_${format.quality}` ? '下载中...' : '下载 MP4'}
                             </button>
                           </div>
                         ))}
@@ -296,9 +326,10 @@ function App() {
                           <button
                             type="button"
                             onClick={() => downloadImage(imgUrl, idx)}
+                            disabled={!!downloadingKey}
                             className="download-image-btn"
                           >
-                            下载原图 #{idx + 1}
+                            {downloadingKey === `img_${idx}` ? '下载中...' : `下载原图 #${idx + 1}`}
                           </button>
                         </div>
                       ))}
