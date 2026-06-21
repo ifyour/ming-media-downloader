@@ -51,6 +51,8 @@ function App() {
   const [result, setResult] = useState<MediaResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total: number } | null>(null);
+  const [extractedUrl, setExtractedUrl] = useState<string | null>(null);
 
   // Load download history from localStorage
   useEffect(() => {
@@ -77,10 +79,29 @@ function App() {
     localStorage.removeItem('download_history');
   };
 
-  // Extract URL from input text (handles mobile share sheet text decoration)
+  // Extract URL from input text (handles mobile share sheet text with Chinese + link)
+  // Xiaohongshu shares typically look like: "12 小甜甜发布了一篇小红书笔记... http://xhslink.com/xxx"
   const extractUrl = (text: string): string | null => {
-    const match = text.match(/https?:\/\/[^\s]+/i);
-    return match ? match[0] : null;
+    // Match URLs starting with http/https, stopping at whitespace or Chinese punctuation
+    const urlPattern = /https?:\/\/[^\s\u3002\uff0c\u3001\uff01\uff1f\u300a\u300b\u201c\u201d\uff08\uff09()<>]+/i;
+    const match = text.match(urlPattern);
+    if (match) {
+      // Clean trailing punctuation that might have been captured
+      return match[0].replace(/[.,;:!?]+$/, '');
+    }
+    return null;
+  };
+
+  // Auto-extract and display URL when input changes
+  const handleInputChange = (text: string) => {
+    setInputText(text);
+    const url = extractUrl(text);
+    // Show extracted URL only if input contains extra text beyond the URL
+    if (url && text.trim() !== url) {
+      setExtractedUrl(url);
+    } else {
+      setExtractedUrl(null);
+    }
   };
 
   const handleParse = async (e: React.FormEvent) => {
@@ -149,12 +170,34 @@ function App() {
     setDownloadingKey(null);
   };
 
-  // Fetch resource as blob and trigger browser download without opening a new tab
+  // Fetch resource as blob with progress tracking and trigger browser download
   const fetchAndSave = async (downloadUrl: string, filename: string) => {
     try {
+      setDownloadProgress({ loaded: 0, total: 0 });
       const res = await fetch(downloadUrl);
       if (!res.ok) throw new Error(`Download failed (HTTP ${res.status})`);
-      const blob = await res.blob();
+
+      // Get total size from Content-Length header
+      const contentLength = res.headers.get('Content-Length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+
+      // Read stream with progress tracking
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('Failed to read response stream');
+
+      const chunks: Uint8Array[] = [];
+      let loaded = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        setDownloadProgress({ loaded, total });
+      }
+
+      // Combine chunks into blob
+      const blob = new Blob(chunks as BlobPart[]);
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
@@ -169,7 +212,18 @@ function App() {
     } catch (err: any) {
       console.error('Download error:', err);
       alert(`下载失败: ${err.message}`);
+    } finally {
+      setDownloadProgress(null);
     }
+  };
+
+  // Format bytes to human-readable string
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleHistoryClick = (url: string) => {
@@ -195,24 +249,32 @@ function App() {
       <main className="app-main">
         <section className="input-card">
           <form onSubmit={handleParse} className="parse-form">
-            <div className="input-group">
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="粘贴小红书分享文本或 X/Twitter 推文链接..."
-                disabled={isLoading}
-                className="url-input"
-              />
-              {inputText && (
-                <button
-                  type="button"
-                  onClick={() => { setInputText(''); setResult(null); setError(null); }}
-                  className="clear-btn"
+            <div className="input-wrapper">
+              <div className="input-group">
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  placeholder="粘贴小红书分享文本或 X/Twitter 推文链接..."
                   disabled={isLoading}
-                >
-                  ✕
-                </button>
+                  className="url-input"
+                />
+                {inputText && (
+                  <button
+                    type="button"
+                    onClick={() => { setInputText(''); setResult(null); setError(null); setExtractedUrl(null); }}
+                    className="clear-btn"
+                    disabled={isLoading}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {extractedUrl && (
+                <div className="extracted-url-hint">
+                  <span className="extracted-label">已识别链接:</span>
+                  <span className="extracted-link">{extractedUrl}</span>
+                </div>
               )}
             </div>
             <button
@@ -305,7 +367,13 @@ function App() {
                               disabled={!!downloadingKey}
                               className="download-btn-small"
                             >
-                              {downloadingKey === `video_${format.quality}` ? '下载中...' : '下载 MP4'}
+                              {downloadingKey === `video_${format.quality}` ? (
+                                <span className="download-progress-text">
+                                  {downloadProgress?.total
+                                    ? `${Math.round((downloadProgress.loaded / downloadProgress.total) * 100)}%`
+                                    : `${formatBytes(downloadProgress?.loaded || 0)}`}
+                                </span>
+                              ) : '下载 MP4'}
                             </button>
                           </div>
                         ))}
@@ -327,7 +395,11 @@ function App() {
                             disabled={!!downloadingKey}
                             className="download-image-btn"
                           >
-                            {downloadingKey === `img_${idx}` ? '下载中...' : `下载原图 #${idx + 1}`}
+                            {downloadingKey === `img_${idx}` ? (
+                              downloadProgress?.total
+                                ? `${Math.round((downloadProgress.loaded / downloadProgress.total) * 100)}%`
+                                : `${formatBytes(downloadProgress?.loaded || 0)}`
+                            ) : `下载原图 #${idx + 1}`}
                           </button>
                         </div>
                       ))}
@@ -335,6 +407,32 @@ function App() {
                   </div>
                 )}
               </div>
+
+              {/* Download Progress Bar */}
+              {downloadingKey && downloadProgress && (
+                <div className="download-progress-bar-container">
+                  <div className="download-progress-info">
+                    <span className="download-progress-label">正在下载...</span>
+                    <span className="download-progress-stats">
+                      {formatBytes(downloadProgress.loaded)}
+                      {downloadProgress.total > 0 && ` / ${formatBytes(downloadProgress.total)}`}
+                    </span>
+                  </div>
+                  <div className="download-progress-bar">
+                    <div
+                      className="download-progress-fill"
+                      style={{
+                        width: downloadProgress.total > 0
+                          ? `${Math.min((downloadProgress.loaded / downloadProgress.total) * 100, 100)}%`
+                          : '100%',
+                      }}
+                    />
+                    {downloadProgress.total === 0 && (
+                      <div className="download-progress-indeterminate" />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -358,7 +456,7 @@ function App() {
                     <span className={`hist-platform ${item.platform}`}>
                       {item.platform === 'xiaohongshu' ? 'XHS' : 'X'}
                     </span>
-                    {/* <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span> */}
+                    <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span>
                   </div>
                   <div className="history-title-wrap">
                     <p className="history-title">{item.title}</p>
