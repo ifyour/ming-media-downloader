@@ -453,7 +453,7 @@ function App() {
                 >
                   <div className="history-meta">
                     <span className={`hist-platform ${item.platform}`}>
-                      {item.platform === 'xiaohongshu' ? 'XHS' : 'X'}
+                      {item.platform === 'xiaohongshu' ? 'XHS' : '𝕏'}
                     </span>
                     <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span>
                   </div>
