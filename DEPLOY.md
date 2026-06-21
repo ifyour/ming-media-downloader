@@ -95,14 +95,13 @@ pnpm install
 
 ### 启动开发服务
 
-需要同时启动两个服务：
-
 ```bash
-# 终端 1：启动前端 Vite 开发服务器（端口 5173）
+# 一键启动前后端开发
 pnpm dev
 
-# 终端 2：启动 Worker 本地开发服务器（端口 8787）
-pnpm dev:worker
+# 或者单独启动
+pnpm dev:frontend   # 前端 Vite 开发服务器（端口 5173）
+pnpm dev:backend    # Worker 本地开发服务器（端口 8787）
 ```
 
 访问 `http://localhost:5173` 即可使用。Vite 会自动将 `/api/*` 请求代理到 Worker。
@@ -117,7 +116,9 @@ pnpm build
 
 ## 部署
 
-### 1. 部署 Worker（后端 API）
+> 一键部署前后端：`pnpm deploy`
+
+### 1. 部署后端 API（Worker）
 
 Worker 部署到 Cloudflare Workers：
 
@@ -125,8 +126,8 @@ Worker 部署到 Cloudflare Workers：
 # 登录 Cloudflare（首次需要）
 pnpm exec wrangler login
 
-# 部署
-pnpm exec wrangler deploy worker/src/index.ts --name ming-media-downloader-api
+# 部署后端
+pnpm deploy:backend
 ```
 
 部署成功后会获得一个 `https://ming-media-downloader-api.<your-subdomain>.workers.dev` 的地址。
@@ -149,11 +150,8 @@ binding = "MYBROWSER"
 #### 方案 A：Cloudflare Pages
 
 ```bash
-# 先构建
-pnpm build
-
-# 使用 wrangler 部署 Pages
-pnpm exec wrangler pages deploy dist --project-name ming-media-downloader
+# 构建并部署到 Cloudflare Pages
+pnpm deploy:frontend
 ```
 
 #### 方案 B：Vercel

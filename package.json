@@ -4,14 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:worker": "wrangler dev worker/src/index.ts --port 8787",
+    "dev": "concurrently -k -n frontend,backend -c blue,green \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "wrangler dev worker/src/index.ts --port 8787",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
     "preview": "vite preview",
-    "deploy:worker": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api",
-    "deploy:pages": "pnpm build && wrangler pages deploy dist --project-name ming-media-downloader",
-    "deploy": "pnpm deploy:worker && pnpm deploy:pages"
+    "lint": "eslint .",
+    "deploy": "pnpm deploy:backend && pnpm deploy:frontend",
+    "deploy:frontend": "pnpm build && wrangler pages deploy dist --project-name ming-media-downloader",
+    "deploy:backend": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api"
   },
   "dependencies": {
     "@fontsource/geist-mono": "^5.2.8",
@@ -25,6 +26,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^10.0.3",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
