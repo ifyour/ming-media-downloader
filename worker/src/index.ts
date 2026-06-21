@@ -52,6 +52,18 @@ export default {
       }
     }
 
+    if (path === '/api/image-proxy') {
+      const imageUrl = urlObj.searchParams.get('url');
+      if (!imageUrl) {
+        return errorResponse('Missing "url" parameter');
+      }
+      try {
+        return await handleImageProxy(imageUrl);
+      } catch (err: any) {
+        return errorResponse(err.message || 'Image proxy failed', 500);
+      }
+    }
+
     if (path === '/api/download') {
       const mediaUrl = urlObj.searchParams.get('url');
       const filename = urlObj.searchParams.get('name') || 'video.mp4';
@@ -145,6 +157,7 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
   if (isStateEmpty && env.MYBROWSER) {
     try {
       // Dynamic import to avoid errors if the package is not bound
+      // @ts-expect-error - @cloudflare/puppeteer is only available at runtime with Browser Rendering binding
       const puppeteer = await import('@cloudflare/puppeteer');
       const browser = await puppeteer.default.launch(env.MYBROWSER);
       const page = await browser.newPage();
@@ -210,7 +223,7 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
 
       // Sort by resolution/bitrate or size descending to display highest quality first
       videoList.sort((a, b) => (b.width * b.height) - (a.width * a.height));
-      
+
       // Filter out duplicate masterUrls
       const seenUrls = new Set<string>();
       result.videos = videoList.filter((v: any) => {
@@ -339,7 +352,7 @@ async function parseTwitter(url: string): Promise<any> {
   for (const media of mediaList) {
     if (media.type === 'video' || media.type === 'gif') {
       result.type = 'video';
-      
+
       // Try to read variants/formats
       const formats = media.formats || media.variants || [];
       const videoFormats = formats
@@ -354,7 +367,7 @@ async function parseTwitter(url: string): Promise<any> {
 
       // Sort by quality/bitrate descending
       videoFormats.sort((a: any, b: any) => b.bitrate - a.bitrate);
-      
+
       // If no mp4 formats were found but there is a main media url
       if (videoFormats.length === 0 && media.url && media.url.includes('.mp4')) {
         videoFormats.push({
@@ -401,6 +414,32 @@ function extractTwitterQuality(url: string): string {
   return 'HD';
 }
 
+// Image Proxy Handler - bypasses hotlink protection
+async function handleImageProxy(imageUrl: string): Promise<Response> {
+  const res = await fetch(imageUrl, {
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Referer': 'https://www.xiaohongshu.com/',
+      'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch image. Status: ${res.status}`);
+  }
+
+  const headers = new Headers(res.headers);
+  headers.set('Access-Control-Allow-Origin', '*');
+  // Cache for 1 hour on CDN edge
+  headers.set('Cache-Control', 'public, max-age=3600');
+
+  return new Response(res.body, {
+    status: res.status,
+    headers,
+  });
+}
+
 // Streaming Proxy Handler for downloads
 async function handleProxyDownload(url: string, filename: string): Promise<Response> {
   const mediaRes = await fetch(url, {
@@ -416,7 +455,7 @@ async function handleProxyDownload(url: string, filename: string): Promise<Respo
 
   // Create responsive headers
   const headers = new Headers(mediaRes.headers);
-  
+
   // Set CORS and Attachment header
   headers.set('Access-Control-Allow-Origin', '*');
   headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);

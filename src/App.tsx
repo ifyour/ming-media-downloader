@@ -37,6 +37,12 @@ interface HistoryItem {
   timestamp: number;
 }
 
+// Proxy image through worker to bypass hotlink protection
+function proxiedImage(url: string): string {
+  if (!url) return url;
+  return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+}
+
 function App() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +50,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MediaResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>('');
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
 
   // Load download history from localStorage
@@ -82,7 +87,6 @@ function App() {
     e.preventDefault();
     setError(null);
     setResult(null);
-    setSelectedVideoUrl('');
 
     const targetUrl = extractUrl(inputText);
     if (!targetUrl) {
@@ -115,11 +119,6 @@ function App() {
         title: data.title || data.desc || '无标题内容',
         url: targetUrl
       });
-
-      // Default select the first (highest quality) video if type is video
-      if (data.type === 'video' && data.videos.length > 0) {
-        setSelectedVideoUrl(data.videos[0].url);
-      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || '网络连接错误，请检查您的网络或稍后再试');
@@ -209,7 +208,7 @@ function App() {
               {inputText && (
                 <button
                   type="button"
-                  onClick={() => setInputText('')}
+                  onClick={() => { setInputText(''); setResult(null); setError(null); }}
                   className="clear-btn"
                   disabled={isLoading}
                 >
@@ -253,7 +252,7 @@ function App() {
 
             <div className="result-header">
               <img
-                src={result.author.avatar || 'https://via.placeholder.com/150'}
+                src={proxiedImage(result.author.avatar) || 'https://via.placeholder.com/150'}
                 alt={result.author.name}
                 className="author-avatar"
               />
@@ -273,7 +272,7 @@ function App() {
             <div className="media-preview-container">
               <div className="cover-wrapper">
                 <img
-                  src={result.cover || 'https://via.placeholder.com/600'}
+                  src={proxiedImage(result.cover) || 'https://via.placeholder.com/600'}
                   alt="Cover Preview"
                   className="media-cover"
                 />
@@ -322,7 +321,7 @@ function App() {
                     <div className="image-grid">
                       {result.images.map((imgUrl, idx) => (
                         <div key={idx} className="image-item">
-                          <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="thumb" />
+                          <img src={proxiedImage(imgUrl)} alt={`Thumbnail ${idx + 1}`} className="thumb" />
                           <button
                             type="button"
                             onClick={() => downloadImage(imgUrl, idx)}
@@ -360,7 +359,7 @@ function App() {
                     <span className={`hist-platform ${item.platform}`}>
                       {item.platform === 'xiaohongshu' ? 'XHS' : 'X'}
                     </span>
-                    <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span>
+                    {/* <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span> */}
                   </div>
                   <div className="history-title-wrap">
                     <p className="history-title">{item.title}</p>
