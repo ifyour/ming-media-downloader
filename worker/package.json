@@ -1,0 +1,9 @@
+{
+  "name": "get-video-api",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240101.0",
+    "typescript": "^5.0.0"
+  }
+}

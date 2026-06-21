@@ -1,0 +1,353 @@
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+interface Author {
+  name: string;
+  avatar: string;
+  screen_name?: string;
+}
+
+interface VideoFormat {
+  url: string;
+  width: number;
+  height: number;
+  quality: string;
+  size?: number;
+  bitrate?: number;
+}
+
+interface MediaResult {
+  platform: 'xiaohongshu' | 'twitter';
+  id: string;
+  type: 'video' | 'images';
+  title: string;
+  desc: string;
+  cover: string;
+  author: Author;
+  videos: VideoFormat[];
+  images: string[];
+}
+
+interface HistoryItem {
+  id: string;
+  platform: 'xiaohongshu' | 'twitter';
+  type: 'video' | 'images';
+  title: string;
+  url: string;
+  timestamp: number;
+}
+
+function App() {
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<MediaResult | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>('');
+
+  // Load download history from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('download_history');
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  // Save history helper
+  const addToHistory = (item: Omit<HistoryItem, 'timestamp'>) => {
+    const newItem: HistoryItem = { ...item, timestamp: Date.now() };
+    const updated = [newItem, ...history.filter(h => h.url !== item.url)].slice(0, 10);
+    setHistory(updated);
+    localStorage.setItem('download_history', JSON.stringify(updated));
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('download_history');
+  };
+
+  // Extract URL from input text (handles mobile share sheet text decoration)
+  const extractUrl = (text: string): string | null => {
+    const match = text.match(/https?:\/\/[^\s]+/i);
+    return match ? match[0] : null;
+  };
+
+  const handleParse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setResult(null);
+    setSelectedVideoUrl('');
+
+    const targetUrl = extractUrl(inputText);
+    if (!targetUrl) {
+      setError('请输入或粘贴有效的链接地址 (小红书分享链接或X/Twitter推文链接)');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingStep('正在分析链接格式...');
+
+    try {
+      // Step simulation for good UI feedback
+      setTimeout(() => setLoadingStep('正在请求服务器解析...'), 800);
+      setTimeout(() => setLoadingStep('正在提取原始视频流 (无水印)...'), 1600);
+
+      const response = await fetch(`/api/parse?url=${encodeURIComponent(targetUrl)}`);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `解析失败 (HTTP ${response.status})`);
+      }
+
+      const data: MediaResult = await response.json();
+      setResult(data);
+
+      // Add to history
+      addToHistory({
+        id: data.id,
+        platform: data.platform,
+        type: data.type,
+        title: data.title || data.desc || '无标题内容',
+        url: targetUrl
+      });
+
+      // Default select the first (highest quality) video if type is video
+      if (data.type === 'video' && data.videos.length > 0) {
+        setSelectedVideoUrl(data.videos[0].url);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || '网络连接错误，请检查您的网络或稍后再试');
+    } finally {
+      setIsLoading(false);
+      setLoadingStep('');
+    }
+  };
+
+  const triggerDownload = (url: string, quality: string) => {
+    if (!result) return;
+    const filename = `${result.platform}_${result.id}_${quality}.mp4`;
+    // Use worker proxy to force browser download instead of playing
+    const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`;
+    window.open(downloadUrl, '_blank');
+  };
+
+  const downloadImage = (url: string, index: number) => {
+    if (!result) return;
+    const extension = url.includes('.png') ? 'png' : 'jpg';
+    const filename = `${result.platform}_${result.id}_img_${index + 1}.${extension}`;
+    const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`;
+    window.open(downloadUrl, '_blank');
+  };
+
+  const handleHistoryClick = (url: string) => {
+    setInputText(url);
+    // Automatically trigger form submit
+    setTimeout(() => {
+      const button = document.getElementById('parse-btn');
+      button?.click();
+    }, 100);
+  };
+
+  return (
+    <div className="app-container">
+      <header className="app-header">
+        <div className="logo-area">
+          <div className="glowing-orb"></div>
+          <span className="logo-text">⚡ Ming Media Downloader</span>
+        </div>
+        <p className="subtitle">
+          无水印下载小红书视频、图片，以及 X (Twitter) 高清推文视频
+        </p>
+      </header>
+
+      <main className="app-main">
+        <section className="input-card">
+          <form onSubmit={handleParse} className="parse-form">
+            <div className="input-group">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="粘贴小红书分享文本或 X/Twitter 推文链接..."
+                disabled={isLoading}
+                className="url-input"
+              />
+              {inputText && (
+                <button
+                  type="button"
+                  onClick={() => setInputText('')}
+                  className="clear-btn"
+                  disabled={isLoading}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button
+              type="submit"
+              id="parse-btn"
+              disabled={isLoading || !inputText.trim()}
+              className={`submit-btn ${isLoading ? 'loading' : ''}`}
+            >
+              {isLoading ? '解析中...' : '解析链接'}
+            </button>
+          </form>
+
+          {error && (
+            <div className="error-alert">
+              <span className="error-icon">⚠️</span>
+              <p className="error-text">{error}</p>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="loading-container">
+              <div className="spinner"></div>
+              <p className="loading-text">{loadingStep}</p>
+              <div className="progress-bar-container">
+                <div className="progress-bar-shimmer"></div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {result && (
+          <section className="result-card fade-in">
+            <div className="platform-tag" data-platform={result.platform}>
+              {result.platform === 'xiaohongshu' ? '📕 小红书' : '🐦 X (Twitter)'}
+            </div>
+
+            <div className="result-header">
+              <img
+                src={result.author.avatar || 'https://via.placeholder.com/150'}
+                alt={result.author.name}
+                className="author-avatar"
+              />
+              <div className="author-info">
+                <h3>{result.author.name}</h3>
+                {result.author.screen_name && (
+                  <span className="author-handle">@{result.author.screen_name}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="content-detail">
+              {result.title && <h2 className="content-title">{result.title}</h2>}
+              {result.desc && <p className="content-desc">{result.desc}</p>}
+            </div>
+
+            <div className="media-preview-container">
+              <div className="cover-wrapper">
+                <img
+                  src={result.cover || 'https://via.placeholder.com/600'}
+                  alt="Cover Preview"
+                  className="media-cover"
+                />
+                <span className="type-badge">
+                  {result.type === 'video' ? '🎬 视频' : '🖼️ 图片集'}
+                </span>
+              </div>
+
+              <div className="download-actions">
+                {result.type === 'video' ? (
+                  <div className="video-options">
+                    <h4>选择下载视频画质</h4>
+                    {result.videos.length > 0 ? (
+                      <div className="format-list">
+                        {result.videos.map((format, idx) => (
+                          <div key={idx} className="format-item">
+                            <div className="format-info">
+                              <span className="quality-label">{format.quality}</span>
+                              <span className="resolution">
+                                {format.width}x{format.height}
+                              </span>
+                              {format.size && (
+                                <span className="size">
+                                  {(format.size / (1024 * 1024)).toFixed(2)} MB
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => triggerDownload(format.url, format.quality)}
+                              className="download-btn-small"
+                            >
+                              下载 MP4
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="no-media-text">未提取到匹配的视频流地址</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="image-options">
+                    <h4>解析到 {result.images.length} 张原图 (无水印)</h4>
+                    <div className="image-grid">
+                      {result.images.map((imgUrl, idx) => (
+                        <div key={idx} className="image-item">
+                          <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="thumb" />
+                          <button
+                            type="button"
+                            onClick={() => downloadImage(imgUrl, idx)}
+                            className="download-image-btn"
+                          >
+                            下载原图 #{idx + 1}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {history.length > 0 && (
+          <section className="history-section">
+            <div className="history-header">
+              <h3>最近解析记录</h3>
+              <button onClick={clearHistory} className="clear-history-btn">
+                清空记录
+              </button>
+            </div>
+            <div className="history-list">
+              {history.map((item, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleHistoryClick(item.url)}
+                  className="history-item"
+                >
+                  <div className="history-meta">
+                    <span className={`hist-platform ${item.platform}`}>
+                      {item.platform === 'xiaohongshu' ? 'XHS' : 'X'}
+                    </span>
+                    <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span>
+                  </div>
+                  <div className="history-title-wrap">
+                    <p className="history-title">{item.title}</p>
+                    <span className="history-url">{item.url}</span>
+                  </div>
+                  <span className="arrow">›</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <footer className="app-footer">
+        <p className="disclaimer">本工具仅供学习及个人备份使用，请尊重原创作者的版权利益。</p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;

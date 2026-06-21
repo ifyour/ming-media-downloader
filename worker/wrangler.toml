@@ -1,0 +1,7 @@
+name = "get-video-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# If the user wants to enable Cloudflare Browser Rendering, they can uncomment the following binding:
+# [browser]
+# binding = "MYBROWSER"
