@@ -239,7 +239,7 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="logo-area">
-          <span className="logo-text">⚡ Ming Media Downloader</span>
+          <span className="logo-text">Ming Media Downloader</span>
         </div>
         <p className="subtitle">
           无水印下载小红书视频、图片，以及 X (Twitter) 高清推文视频
@@ -345,7 +345,6 @@ function App() {
               <div className="download-actions">
                 {result.type === 'video' ? (
                   <div className="video-options">
-                    <h4>选择下载视频画质</h4>
                     {result.videos.length > 0 ? (
                       <div className="format-list">
                         {result.videos.map((format, idx) => (

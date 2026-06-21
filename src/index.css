@@ -1,111 +1,256 @@
+/* =============================================
+   Geist Design System — Light & Dark Themes
+   Based on Vercel's Geist design system
+   Source: https://vercel.com/design.md
+   ============================================= */
+
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+@import "@fontsource/geist-mono/600.css";
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* ---- Gray Scale (solid, holds contrast on any surface) ---- */
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3;
+  --gray-500: #808080;
+  --gray-600: #666666;
+  --gray-700: #525252;
+  --gray-800: #404040;
+  --gray-900: #262626;
+  --gray-1000: #0a0a0a;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* ---- Gray Alpha (translucent, for borders, overlays, hover states) ---- */
+  --gray-alpha-100: rgba(0, 0, 0, 0.04);
+  --gray-alpha-200: rgba(0, 0, 0, 0.06);
+  --gray-alpha-300: rgba(0, 0, 0, 0.10);
+  --gray-alpha-400: rgba(0, 0, 0, 0.14);
+  --gray-alpha-500: rgba(0, 0, 0, 0.18);
+  --gray-alpha-600: rgba(0, 0, 0, 0.22);
+  --gray-alpha-700: rgba(0, 0, 0, 0.30);
+  --gray-alpha-800: rgba(0, 0, 0, 0.40);
+  --gray-alpha-900: rgba(0, 0, 0, 0.58);
+  --gray-alpha-1000: rgba(0, 0, 0, 0.78);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* ---- Background Surfaces ---- */
+  --background-100: #ffffff;
+  --background-200: #fafafa;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* ---- Accent Colors ---- */
+  --blue-100: #eff6ff;
+  --blue-200: #dbeafe;
+  --blue-300: #bfdbfe;
+  --blue-400: #93c5fd;
+  --blue-500: #60a5fa;
+  --blue-600: #3b82f6;
+  --blue-700: #0066ff;
+  --blue-800: #1d4ed8;
+  --blue-900: #1e40af;
+  --blue-1000: #172554;
+
+  --red-100: #fef2f2;
+  --red-200: #fee2e2;
+  --red-300: #fecaca;
+  --red-400: #fca5a5;
+  --red-500: #f87171;
+  --red-600: #ef4444;
+  --red-700: #dc2626;
+  --red-800: #b91c1c;
+  --red-900: #991b1b;
+  --red-1000: #7f1d1d;
+
+  --amber-100: #fffbeb;
+  --amber-200: #fef3c7;
+  --amber-300: #fde68a;
+  --amber-400: #fcd34d;
+  --amber-500: #fbbf24;
+  --amber-600: #f59e0b;
+  --amber-700: #d97706;
+  --amber-800: #b45309;
+  --amber-900: #92400e;
+  --amber-1000: #78350f;
+
+  --green-100: #f0fdf4;
+  --green-200: #dcfce7;
+  --green-300: #bbf7d0;
+  --green-400: #86efac;
+  --green-500: #4ade80;
+  --green-600: #22c55e;
+  --green-700: #16a34a;
+  --green-800: #15803d;
+  --green-900: #166534;
+  --green-1000: #14532d;
+
+  /* Platform colors */
+  --color-xhs: #ff2442;
+  --color-twitter: #1da1f2;
+
+  /* ---- Typography ---- */
+  --font-sans: "Geist Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* ---- Spacing (4px scale) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* ---- Radii ---- */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ---- Elevation ---- */
+  --shadow-raised: 0 2px 2px rgba(0, 0, 0, 0.04);
+  --shadow-popover: 0 1px 1px rgba(0, 0, 0, 0.02),
+    0 4px 8px -4px rgba(0, 0, 0, 0.04),
+    0 16px 24px -8px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 1px 1px rgba(0, 0, 0, 0.02),
+    0 8px 16px -4px rgba(0, 0, 0, 0.04),
+    0 24px 32px -8px rgba(0, 0, 0, 0.06);
+
+  /* ---- Motion ---- */
+  --ease-geist: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* ---- Focus Ring ---- */
+  --focus-ring: 0 0 0 2px var(--background-100), 0 0 0 4px var(--blue-700);
 }
 
+/* ---- Dark Theme ---- */
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+    --gray-100: #161616;
+    --gray-200: #1c1c1c;
+    --gray-300: #232323;
+    --gray-400: #333333;
+    --gray-500: #424242;
+    --gray-600: #555555;
+    --gray-700: #666666;
+    --gray-800: #808080;
+    --gray-900: #a0a0a0;
+    --gray-1000: #e5e5e5;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --gray-alpha-100: rgba(255, 255, 255, 0.04);
+    --gray-alpha-200: rgba(255, 255, 255, 0.06);
+    --gray-alpha-300: rgba(255, 255, 255, 0.10);
+    --gray-alpha-400: rgba(255, 255, 255, 0.14);
+    --gray-alpha-500: rgba(255, 255, 255, 0.18);
+    --gray-alpha-600: rgba(255, 255, 255, 0.22);
+    --gray-alpha-700: rgba(255, 255, 255, 0.30);
+    --gray-alpha-800: rgba(255, 255, 255, 0.40);
+    --gray-alpha-900: rgba(255, 255, 255, 0.58);
+    --gray-alpha-1000: rgba(255, 255, 255, 0.78);
+
+    --background-100: #0a0a0a;
+    --background-200: #111111;
+
+    --shadow-raised: 0 2px 2px rgba(0, 0, 0, 0.24);
+    --shadow-popover: 0 1px 1px rgba(0, 0, 0, 0.12),
+      0 4px 8px -4px rgba(0, 0, 0, 0.24),
+      0 16px 24px -8px rgba(0, 0, 0, 0.36);
+    --shadow-modal: 0 1px 1px rgba(0, 0, 0, 0.12),
+      0 8px 16px -4px rgba(0, 0, 0, 0.24),
+      0 24px 32px -8px rgba(0, 0, 0, 0.36);
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* ---- Base Reset ---- */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--gray-1000);
+  background: var(--background-100);
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--gray-1000);
+  letter-spacing: -0.02em;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+a {
+  color: var(--blue-700);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+/* Focus visible ring */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Disable nonessential motion for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
