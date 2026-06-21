@@ -84,13 +84,13 @@ Worker 作为中间代理拉取远程媒体文件，关键处理：
 ### 前置要求
 
 - Node.js 18+
-- npm
+- pnpm（`npm install -g pnpm`）
 
 ### 安装依赖
 
 ```bash
 # 根目录安装（前端依赖 + wrangler）
-npm install
+pnpm install
 ```
 
 ### 启动开发服务
@@ -99,10 +99,10 @@ npm install
 
 ```bash
 # 终端 1：启动前端 Vite 开发服务器（端口 5173）
-npm run dev
+pnpm dev
 
 # 终端 2：启动 Worker 本地开发服务器（端口 8787）
-npm run dev:worker
+pnpm dev:worker
 ```
 
 访问 `http://localhost:5173` 即可使用。Vite 会自动将 `/api/*` 请求代理到 Worker。
@@ -110,7 +110,7 @@ npm run dev:worker
 ### 构建
 
 ```bash
-npm run build
+pnpm build
 ```
 
 构建产物输出到 `dist/` 目录。
@@ -123,13 +123,13 @@ Worker 部署到 Cloudflare Workers：
 
 ```bash
 # 登录 Cloudflare（首次需要）
-npx wrangler login
+pnpm exec wrangler login
 
 # 部署
-npx wrangler deploy worker/src/index.ts --name get-video-api
+pnpm exec wrangler deploy worker/src/index.ts --name ming-media-downloader-api
 ```
 
-部署成功后会获得一个 `https://get-video-api.<your-subdomain>.workers.dev` 的地址。
+部署成功后会获得一个 `https://ming-media-downloader-api.<your-subdomain>.workers.dev` 的地址。
 
 **可选：启用 Browser Rendering（应对小红书反爬）**
 
@@ -150,16 +150,16 @@ binding = "MYBROWSER"
 
 ```bash
 # 先构建
-npm run build
+pnpm build
 
 # 使用 wrangler 部署 Pages
-npx wrangler pages deploy dist --project-name ming-media-downloader
+pnpm exec wrangler pages deploy dist --project-name ming-media-downloader
 ```
 
 #### 方案 B：Vercel
 
 ```bash
-npm run build
+pnpm build
 # 然后通过 vercel CLI 或 Web 界面部署 dist/ 目录
 ```
 
@@ -173,8 +173,8 @@ npm run build
 
 ```nginx
 location /api/ {
-    proxy_pass https://get-video-api.<your-subdomain>.workers.dev;
-    proxy_set_header Host get-video-api.<your-subdomain>.workers.dev;
+    proxy_pass https://ming-media-downloader-api.<your-subdomain>.workers.dev;
+    proxy_set_header Host ming-media-downloader-api.<your-subdomain>.workers.dev;
 }
 ```
 
@@ -194,7 +194,7 @@ location /api/ {
 编辑 `worker/wrangler.toml`，添加 `routes` 配置：
 
 ```toml
-name = "get-video-api"
+name = "ming-media-downloader-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
@@ -209,12 +209,12 @@ routes = [
 然后重新部署：
 
 ```bash
-npx wrangler deploy
+pnpm exec wrangler deploy
 ```
 
 部署完成后，Cloudflare 会自动在 DNS 中创建一条 CNAME 记录，将 `api.example.com` 指向 Worker。访问 `https://api.example.com/api/parse?url=...` 即可直接调用。
 
-> 也可以不写配置文件，在 Cloudflare Dashboard → Workers → get-video-api → Triggers → Custom Domains 中手动添加。
+> 也可以不写配置文件，在 Cloudflare Dashboard → Workers → ming-media-downloader-api → Triggers → Custom Domains 中手动添加。
 
 #### 4.2 前端绑定自定义域名
 
