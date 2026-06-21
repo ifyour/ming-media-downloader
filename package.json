@@ -8,7 +8,10 @@
     "dev:worker": "wrangler dev worker/src/index.ts --port 8787",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:worker": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api",
+    "deploy:pages": "pnpm build && wrangler pages deploy dist --project-name ming-media-downloader",
+    "deploy": "pnpm deploy:worker && pnpm deploy:pages"
   },
   "dependencies": {
     "react": "^19.2.6",
