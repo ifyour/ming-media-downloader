@@ -242,7 +242,7 @@ function App() {
           <span className="logo-text">Ming Media Downloader</span>
         </div>
         <p className="subtitle">
-          无水印下载小红书视频、图片，以及 X (Twitter) 高清推文视频
+          无水印下载小红书和 𝕏 视频
         </p>
       </header>
 
@@ -255,7 +255,7 @@ function App() {
                   type="text"
                   value={inputText}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  placeholder="粘贴小红书分享文本或 X/Twitter 推文链接..."
+                  placeholder="粘贴小红书分享文本或 𝕏 推文链接..."
                   disabled={isLoading}
                   className="url-input"
                 />
