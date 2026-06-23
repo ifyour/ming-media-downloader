@@ -302,7 +302,7 @@ function App() {
 
           {isLoading && (
             <div className="loading-container">
-              <div className="spinner"></div>
+              {/* <div className="spinner"></div> */}
               <p className="loading-text">{loadingStep}</p>
               <div className="progress-bar-container">
                 <div className="progress-bar-shimmer"></div>

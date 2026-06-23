@@ -196,7 +196,7 @@ body {
 
 #root {
   width: 100%;
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 0 var(--space-6);
   min-height: 100vh;
@@ -239,10 +239,10 @@ button {
 }
 
 /* Focus visible ring */
-:focus-visible {
+/* :focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-}
+} */
 
 /* Disable nonessential motion for reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
