@@ -107,6 +107,11 @@ function App() {
     } else {
       setExtractedUrl(null);
     }
+    // Clear result/error when input is emptied
+    if (!text.trim()) {
+      setResult(null);
+      setError(null);
+    }
   };
 
   const handleParse = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -265,16 +270,6 @@ function App() {
                   disabled={isLoading}
                   className="url-input"
                 />
-                {inputText && (
-                  <button
-                    type="button"
-                    onClick={() => { setInputText(''); setResult(null); setError(null); setExtractedUrl(null); }}
-                    className="clear-btn"
-                    disabled={isLoading}
-                  >
-                    ✕
-                  </button>
-                )}
               </div>
               {extractedUrl && (
                 <div className="extracted-url-hint">
@@ -313,6 +308,14 @@ function App() {
 
         {result && (
           <section className="result-card fade-in">
+            <button
+              type="button"
+              className="result-card-clear-btn"
+              onClick={() => { setInputText(''); setResult(null); setError(null); setExtractedUrl(null); }}
+              aria-label="清除结果"
+            >
+              ✕
+            </button>
             <div className="platform-tag" data-platform={result.platform}>
               {result.platform === 'xiaohongshu' ? '📕 小红书' : '🐦 X (Twitter)'}
             </div>
@@ -374,9 +377,11 @@ function App() {
                             >
                               {downloadingKey === `video_${format.quality}` ? (
                                 <span className="download-progress-text">
-                                  {downloadProgress?.total
+                                  {downloadProgress?.total && downloadProgress.total > 0
                                     ? `${Math.round((downloadProgress.loaded / downloadProgress.total) * 100)}%`
-                                    : `${formatBytes(downloadProgress?.loaded || 0)}`}
+                                    : downloadProgress?.loaded
+                                      ? `${formatBytes(downloadProgress.loaded)}`
+                                      : '0%'}
                                 </span>
                               ) : '下载 MP4'}
                             </button>
@@ -401,9 +406,11 @@ function App() {
                             className="download-image-btn"
                           >
                             {downloadingKey === `img_${idx}` ? (
-                              downloadProgress?.total
+                              downloadProgress?.total && downloadProgress.total > 0
                                 ? `${Math.round((downloadProgress.loaded / downloadProgress.total) * 100)}%`
-                                : `${formatBytes(downloadProgress?.loaded || 0)}`
+                                : downloadProgress?.loaded
+                                  ? `${formatBytes(downloadProgress.loaded)}`
+                                  : '0%'
                             ) : `下载原图 #${idx + 1}`}
                           </button>
                         </div>

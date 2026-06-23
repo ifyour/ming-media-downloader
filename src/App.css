@@ -348,6 +348,7 @@
 
 /* ---- Result Card ---- */
 .result-card {
+  position: relative;
   background: var(--background-100);
   border: 1px solid var(--gray-alpha-400);
   border-radius: var(--radius-md);
@@ -363,6 +364,29 @@
   .result-card {
     padding: var(--space-4);
   }
+}
+
+.result-card-clear-btn {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--gray-alpha-200);
+  color: var(--gray-700);
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease;
+  z-index: 1;
+}
+
+.result-card-clear-btn:hover {
+  background: var(--gray-alpha-300);
 }
 
 .platform-tag {
