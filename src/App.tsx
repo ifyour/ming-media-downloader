@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import './App.css';
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return '网络连接错误，请检查您的网络或稍后再试';
+}
 
 interface Author {
   name: string;
@@ -49,22 +56,20 @@ function App() {
   const [loadingStep, setLoadingStep] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MediaResult | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('download_history');
+    if (!saved) return [];
+    try {
+      return JSON.parse(saved) as HistoryItem[];
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  });
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [extractedUrl, setExtractedUrl] = useState<string | null>(null);
-
-  // Load download history from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('download_history');
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
 
   // Save history helper
   const addToHistory = (item: Omit<HistoryItem, 'timestamp'>) => {
@@ -104,7 +109,7 @@ function App() {
     }
   };
 
-  const handleParse = async (e: React.FormEvent) => {
+  const handleParse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setResult(null);
@@ -140,9 +145,9 @@ function App() {
         title: data.title || data.desc || '无标题内容',
         url: targetUrl
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || '网络连接错误，请检查您的网络或稍后再试');
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
       setLoadingStep('');
@@ -209,9 +214,9 @@ function App() {
         document.body.removeChild(a);
         URL.revokeObjectURL(blobUrl);
       }, 1000);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Download error:', err);
-      alert(`下载失败: ${err.message}`);
+      alert(`下载失败: ${getErrorMessage(err)}`);
     } finally {
       setDownloadProgress(null);
     }
@@ -237,6 +242,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <PWAUpdatePrompt />
       <header className="app-header">
         <div className="logo-area">
           <span className="logo-text">Ming Media Downloader</span>

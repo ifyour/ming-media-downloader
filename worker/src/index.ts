@@ -1,6 +1,65 @@
 export interface Env {
   // Add bindings here if needed, e.g. MYBROWSER for Cloudflare Browser Rendering
-  MYBROWSER?: any;
+  MYBROWSER?: unknown;
+}
+
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+type JsonObj = { [key: string]: JsonValue };
+
+interface Author {
+  name: string;
+  screen_name?: string;
+  avatar: string;
+}
+
+interface VideoFormat {
+  url: string;
+  width: number;
+  height: number;
+  quality: string;
+  size?: number;
+  bitrate?: number;
+  fps?: number;
+}
+
+interface MediaResult {
+  platform: 'xiaohongshu' | 'twitter';
+  id: string;
+  type: 'video' | 'images';
+  title: string;
+  desc: string;
+  cover: string;
+  author: Author;
+  videos: VideoFormat[];
+  images: string[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function getString(obj: unknown, key: string): string {
+  if (!isRecord(obj)) return '';
+  const value = obj[key];
+  return typeof value === 'string' ? value : '';
+}
+
+function getNumber(obj: unknown, key: string): number {
+  if (!isRecord(obj)) return 0;
+  const value = obj[key];
+  return typeof value === 'number' ? value : 0;
+}
+
+function getArray(obj: unknown, key: string): unknown[] {
+  if (!isRecord(obj)) return [];
+  const value = obj[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return 'Unknown error';
 }
 
 // CORS Headers helper
@@ -12,7 +71,7 @@ const corsHeaders = {
 };
 
 // Response helper with CORS
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: JsonValue, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -28,6 +87,7 @@ function errorResponse(message: string, status = 400) {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    void ctx;
     const urlObj = new URL(request.url);
     const path = urlObj.pathname;
 
@@ -46,9 +106,9 @@ export default {
 
       try {
         const result = await parseMediaUrl(targetUrl, env);
-        return jsonResponse(result);
-      } catch (err: any) {
-        return errorResponse(err.message || 'Failed to parse URL', 500);
+        return jsonResponse(result as unknown as JsonValue);
+      } catch (err) {
+        return errorResponse(getErrorMessage(err), 500);
       }
     }
 
@@ -59,8 +119,8 @@ export default {
       }
       try {
         return await handleImageProxy(imageUrl);
-      } catch (err: any) {
-        return errorResponse(err.message || 'Image proxy failed', 500);
+      } catch (err) {
+        return errorResponse(getErrorMessage(err), 500);
       }
     }
 
@@ -73,8 +133,8 @@ export default {
 
       try {
         return await handleProxyDownload(mediaUrl, filename);
-      } catch (err: any) {
-        return errorResponse(err.message || 'Download proxy failed', 500);
+      } catch (err) {
+        return errorResponse(getErrorMessage(err), 500);
       }
     }
 
@@ -86,14 +146,14 @@ export default {
 // Resolve redirects (like xhslink.com -> xiaohongshu.com)
 async function resolveUrl(url: string): Promise<string> {
   // Clean up URL
-  url = url.trim();
-  if (!/^https?:\/\//i.test(url)) {
-    url = 'https://' + url;
+  let cleanUrl = url.trim();
+  if (!/^https?:\/\//i.test(cleanUrl)) {
+    cleanUrl = 'https://' + cleanUrl;
   }
 
   // If it's a short link or redirect link, follow it
-  if (url.includes('xhslink.com') || url.includes('doubleclick.net') || url.includes('t.co')) {
-    const res = await fetch(url, {
+  if (cleanUrl.includes('xhslink.com') || cleanUrl.includes('doubleclick.net') || cleanUrl.includes('t.co')) {
+    const res = await fetch(cleanUrl, {
       method: 'GET',
       redirect: 'manual',
       headers: {
@@ -107,11 +167,11 @@ async function resolveUrl(url: string): Promise<string> {
     }
   }
 
-  return url;
+  return cleanUrl;
 }
 
 // Main parser
-async function parseMediaUrl(url: string, env: Env): Promise<any> {
+async function parseMediaUrl(url: string, env: Env): Promise<MediaResult> {
   const resolvedUrl = await resolveUrl(url);
   const parsedUrl = new URL(resolvedUrl);
   const host = parsedUrl.hostname.toLowerCase();
@@ -126,7 +186,7 @@ async function parseMediaUrl(url: string, env: Env): Promise<any> {
 }
 
 // Parse Xiaohongshu URL
-async function parseXiaohongshu(url: string, env: Env): Promise<any> {
+async function parseXiaohongshu(url: string, env: Env): Promise<MediaResult> {
   // Extract note ID from url
   // Path format is usually /explore/<noteId> or /discovery/item/<noteId>
   const matchId = url.match(/(?:explore|item)\/([a-zA-Z0-9]+)/);
@@ -153,7 +213,9 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
   let state = parseInitialState(html);
 
   // Fallback to Browser Rendering if available and direct parsing failed or note details empty
-  const isStateEmpty = !state || !state.note || !state.note.noteDetailMap || !state.note.noteDetailMap[noteId] || !state.note.noteDetailMap[noteId].note;
+  const stateRecord = isRecord(state) ? state : null;
+  const noteDetailMap = stateRecord ? getRecord(stateRecord, 'note') : null;
+  const isStateEmpty = !noteDetailMap || !isRecord(noteDetailMap) || !isRecord((noteDetailMap as Record<string, unknown>).noteDetailMap) || !isRecord(((noteDetailMap as Record<string, unknown>).noteDetailMap as Record<string, unknown>)[noteId]);
   if (isStateEmpty && env.MYBROWSER) {
     try {
       // Dynamic import to avoid errors if the package is not bound
@@ -167,7 +229,9 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
       await browser.close();
 
       const renderedState = parseInitialState(renderedHtml);
-      if (renderedState && renderedState.note && renderedState.note.noteDetailMap && renderedState.note.noteDetailMap[noteId]) {
+      const renderedRecord = isRecord(renderedState) ? renderedState : null;
+      const renderedNote = renderedRecord ? getRecord(renderedRecord, 'note') : null;
+      if (renderedNote && isRecord((renderedNote as Record<string, unknown>).noteDetailMap) && isRecord(((renderedNote as Record<string, unknown>).noteDetailMap as Record<string, unknown>)[noteId])) {
         state = renderedState;
       }
     } catch (browserErr) {
@@ -176,26 +240,33 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
   }
 
   // Verify state contents
-  if (!state || !state.note || !state.note.noteDetailMap || !state.note.noteDetailMap[noteId]) {
+  const finalState = isRecord(state) ? state : null;
+  const noteState = finalState ? getRecord(finalState, 'note') : null;
+  const noteDetailMapState = noteState ? getRecord(noteState, 'noteDetailMap') : null;
+  const detail = noteDetailMapState ? getRecord(noteDetailMapState, noteId) : null;
+  if (!detail) {
     throw new Error('Failed to parse Xiaohongshu note data. The page structure might have changed or requests are being blocked. Please try again.');
   }
 
-  const detail = state.note.noteDetailMap[noteId];
-  const note = detail.note;
+  const note = getRecord(detail, 'note');
   if (!note || Object.keys(note).length === 0) {
     throw new Error('Failed to load note content (empty note). It might be private or deleted.');
   }
 
-  const title = note.title || '';
-  const desc = note.desc || '';
-  const type = note.type || 'normal'; // 'video' or 'normal' (images)
-  const cover = note.imageList?.[0]?.urlDefault || note.video?.image?.url || '';
-  const author = {
-    name: note.user?.nickname || 'Xiaohongshu User',
-    avatar: note.user?.avatar || '',
+  const title = getString(note, 'title');
+  const desc = getString(note, 'desc');
+  const type = getString(note, 'type') || 'normal'; // 'video' or 'normal' (images)
+  const imageList = getArray(note, 'imageList');
+  const video = getRecord(note, 'video');
+  const firstImage = isRecord(imageList[0]) ? imageList[0] : null;
+  const cover = getString(firstImage, 'urlDefault') || (video ? getString(getRecord(video, 'image'), 'url') : '');
+  const user = getRecord(note, 'user');
+  const author: Author = {
+    name: user ? getString(user, 'nickname') : 'Xiaohongshu User',
+    avatar: user ? getString(user, 'avatar') : '',
   };
 
-  const result: any = {
+  const result: MediaResult = {
     platform: 'xiaohongshu',
     id: noteId,
     type: type === 'video' ? 'video' : 'images',
@@ -207,26 +278,32 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
     images: [],
   };
 
-  if (type === 'video' && note.video) {
-    const videoStream = note.video.media?.stream;
-    if (videoStream) {
+  if (type === 'video' && video) {
+    const media = getRecord(video, 'media');
+    const stream = media ? getRecord(media, 'stream') : null;
+    if (stream) {
+      const h264 = getArray(stream, 'h264');
+      const h265 = getArray(stream, 'h265');
       // Collect all video streams (h264, h265)
-      const streams = [...(videoStream.h264 || []), ...(videoStream.h265 || [])];
-      const videoList = streams.map((stream: any) => ({
-        url: stream.masterUrl,
-        width: stream.width,
-        height: stream.height,
-        size: stream.size,
-        quality: stream.qualityType || 'HD',
-        fps: stream.fps,
-      }));
+      const streams = [...h264, ...h265];
+      const videoList = streams.map((streamItem) => {
+        const s = isRecord(streamItem) ? streamItem : {};
+        return {
+          url: getString(s, 'masterUrl'),
+          width: getNumber(s, 'width'),
+          height: getNumber(s, 'height'),
+          size: getNumber(s, 'size'),
+          quality: getString(s, 'qualityType') || 'HD',
+          fps: getNumber(s, 'fps'),
+        };
+      });
 
       // Sort by resolution/bitrate or size descending to display highest quality first
       videoList.sort((a, b) => (b.width * b.height) - (a.width * a.height));
 
       // Filter out duplicate masterUrls
       const seenUrls = new Set<string>();
-      result.videos = videoList.filter((v: any) => {
+      result.videos = videoList.filter((v) => {
         if (!v.url) return false;
         if (seenUrls.has(v.url)) return false;
         seenUrls.add(v.url);
@@ -236,8 +313,11 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
   }
 
   // Extract images
-  if (note.imageList && note.imageList.length > 0) {
-    result.images = note.imageList.map((img: any) => img.urlDefault || img.url || '');
+  if (imageList.length > 0) {
+    result.images = imageList.map((img) => {
+      const imgRecord = isRecord(img) ? img : {};
+      return getString(imgRecord, 'urlDefault') || getString(imgRecord, 'url');
+    });
   }
 
   // If it was detected as video but couldn't get streams, verify if we have image fallback
@@ -248,8 +328,14 @@ async function parseXiaohongshu(url: string, env: Env): Promise<any> {
   return result;
 }
 
+function getRecord(value: unknown, key: string): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+  const target = value[key];
+  return isRecord(target) ? target : null;
+}
+
 // Clean and Parse initial state from HTML (Pure JSON.parse, no eval/new Function)
-function parseInitialState(html: string): any {
+function parseInitialState(html: string): JsonValue {
   const match = html.match(/window\.__INITIAL_STATE__\s*=\s*(.*?)(?:<\/script>|;)/);
   if (!match) return null;
 
@@ -282,6 +368,7 @@ function parseInitialState(html: string): any {
             + '"';
           rawJson = JSON.parse(doubleQuoted);
         }
+        if (typeof rawJson !== 'string') return null;
         rawJson = rawJson.replace(/:\s*undefined\b/g, ':null');
         return JSON.parse(rawJson);
       } catch (e) {
@@ -292,14 +379,14 @@ function parseInitialState(html: string): any {
 
   try {
     return JSON.parse(stateStr);
-  } catch (e: any) {
-    console.error('JSON.parse direct state failed:', e.message);
+  } catch (e) {
+    console.error('JSON.parse direct state failed:', getErrorMessage(e));
     return null;
   }
 }
 
 // Parse Twitter/X URL using FixTweet API
-async function parseTwitter(url: string): Promise<any> {
+async function parseTwitter(url: string): Promise<MediaResult> {
   // Extract status ID
   const matchId = url.match(/status\/(\d+)/);
   if (!matchId) {
@@ -319,21 +406,25 @@ async function parseTwitter(url: string): Promise<any> {
     throw new Error(`Failed to retrieve tweet information from X. Status: ${apiRes.status}. Details: ${text}`);
   }
 
-  const data = await apiRes.json() as any;
-  if (!data.tweet || data.tweet.type === 'tombstone') {
-    throw new Error(data.message || 'This Tweet is unavailable or deleted.');
+  const data = await apiRes.json() as JsonObj;
+  const tweet = getRecord(data, 'tweet');
+  if (!tweet || getString(tweet, 'type') === 'tombstone') {
+    throw new Error(getString(data, 'message') || 'This Tweet is unavailable or deleted.');
   }
 
-  const tweet = data.tweet;
-  const title = tweet.text || '';
-  const cover = tweet.media?.all?.[0]?.thumbnail_url || tweet.media?.all?.[0]?.url || '';
-  const author = {
-    name: tweet.author?.name || 'X User',
-    screen_name: tweet.author?.screen_name || '',
-    avatar: tweet.author?.avatar_url || '',
+  const title = getString(tweet, 'text');
+  const mediaRecord = getRecord(tweet, 'media');
+  const allMedia = mediaRecord ? getArray(mediaRecord, 'all') : [];
+  const firstMedia = isRecord(allMedia[0]) ? allMedia[0] : null;
+  const cover = getString(firstMedia, 'thumbnail_url') || getString(firstMedia, 'url');
+  const authorRecord = getRecord(tweet, 'author');
+  const author: Author = {
+    name: authorRecord ? getString(authorRecord, 'name') : 'X User',
+    screen_name: authorRecord ? getString(authorRecord, 'screen_name') : '',
+    avatar: authorRecord ? getString(authorRecord, 'avatar_url') : '',
   };
 
-  const result: any = {
+  const result: MediaResult = {
     platform: 'twitter',
     id: tweetId,
     type: 'images',
@@ -345,43 +436,51 @@ async function parseTwitter(url: string): Promise<any> {
     images: [],
   };
 
-  const mediaList = tweet.media?.all || [];
-  const videos: any[] = [];
+  const videos: VideoFormat[] = [];
   const images: string[] = [];
 
-  for (const media of mediaList) {
-    if (media.type === 'video' || media.type === 'gif') {
+  for (const media of allMedia) {
+    const mediaRecord = isRecord(media) ? media : {};
+    const mediaType = getString(mediaRecord, 'type');
+    if (mediaType === 'video' || mediaType === 'gif') {
       result.type = 'video';
 
       // Try to read variants/formats
-      const formats = media.formats || media.variants || [];
+      const formats = getArray(mediaRecord, 'formats').length > 0 ? getArray(mediaRecord, 'formats') : getArray(mediaRecord, 'variants');
+      const width = getNumber(mediaRecord, 'width');
+      const height = getNumber(mediaRecord, 'height');
       const videoFormats = formats
-        .filter((f: any) => f.container === 'mp4' || f.content_type === 'video/mp4')
-        .map((f: any) => ({
-          url: f.url,
-          width: media.width,
-          height: media.height,
-          quality: f.url.includes('/vid/') ? extractTwitterQuality(f.url) : 'HD',
-          bitrate: f.bitrate || 0,
-        }));
-
-      // Sort by quality/bitrate descending
-      videoFormats.sort((a: any, b: any) => b.bitrate - a.bitrate);
+        .filter((f) => {
+          const formatRecord = isRecord(f) ? f : {};
+          return getString(formatRecord, 'container') === 'mp4' || getString(formatRecord, 'content_type') === 'video/mp4';
+        })
+        .map((f) => {
+          const formatRecord = isRecord(f) ? f : {};
+          const formatUrl = getString(formatRecord, 'url');
+          return {
+            url: formatUrl,
+            width,
+            height,
+            quality: formatUrl.includes('/vid/') ? extractTwitterQuality(formatUrl) : 'HD',
+            bitrate: getNumber(formatRecord, 'bitrate'),
+          };
+        });
 
       // If no mp4 formats were found but there is a main media url
-      if (videoFormats.length === 0 && media.url && media.url.includes('.mp4')) {
+      const mediaUrl = getString(mediaRecord, 'url');
+      if (videoFormats.length === 0 && mediaUrl && mediaUrl.includes('.mp4')) {
         videoFormats.push({
-          url: media.url,
-          width: media.width,
-          height: media.height,
+          url: mediaUrl,
+          width,
+          height,
           quality: 'HD',
           bitrate: 0,
         });
       }
 
       videos.push(...videoFormats);
-    } else if (media.type === 'photo') {
-      images.push(media.url);
+    } else if (mediaType === 'photo') {
+      images.push(getString(mediaRecord, 'url'));
     }
   }
 
@@ -390,7 +489,7 @@ async function parseTwitter(url: string): Promise<any> {
 
   // Filter duplicate videos
   const seenUrls = new Set<string>();
-  result.videos = videos.filter((v: any) => {
+  result.videos = videos.filter((v) => {
     if (!v.url) return false;
     if (seenUrls.has(v.url)) return false;
     seenUrls.add(v.url);
@@ -405,7 +504,7 @@ function extractTwitterQuality(url: string): string {
   const match = url.match(/\/(\d+x\d+)\//);
   if (match) {
     const res = match[1].split('x');
-    const height = Math.min(parseInt(res[0]), parseInt(res[1]));
+    const height = Math.min(parseInt(res[0], 10), parseInt(res[1], 10));
     if (height >= 1080) return '1080p';
     if (height >= 720) return '720p';
     if (height >= 480) return '480p';
