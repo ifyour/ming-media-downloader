@@ -617,10 +617,11 @@ async function parseTwitter(url: string): Promise<MediaResult> {
         .map((f) => {
           const formatRecord = isRecord(f) ? f : {};
           const formatUrl = getString(formatRecord, 'url');
+          const urlDims = extractTwitterDimensions(formatUrl);
           return {
             url: formatUrl,
-            width,
-            height,
+            width: urlDims?.width ?? width,
+            height: urlDims?.height ?? height,
             quality: formatUrl.includes('/vid/') ? extractTwitterQuality(formatUrl) : 'HD',
             bitrate: getNumber(formatRecord, 'bitrate'),
           };
@@ -629,10 +630,11 @@ async function parseTwitter(url: string): Promise<MediaResult> {
       // If no mp4 formats were found but there is a main media url
       const mediaUrl = getString(mediaRecord, 'url');
       if (videoFormats.length === 0 && mediaUrl && mediaUrl.includes('.mp4')) {
+        const urlDims = extractTwitterDimensions(mediaUrl);
         videoFormats.push({
           url: mediaUrl,
-          width,
-          height,
+          width: urlDims?.width ?? width,
+          height: urlDims?.height ?? height,
           quality: 'HD',
           bitrate: 0,
         });
@@ -659,12 +661,23 @@ async function parseTwitter(url: string): Promise<MediaResult> {
   return result;
 }
 
+// Utility to extract width/height from Twitter video url (e.g. /720x1280/ or /1280x720/)
+function extractTwitterDimensions(url: string): { width: number; height: number } | null {
+  const match = url.match(/\/(\d+)x(\d+)\//);
+  if (match) {
+    return {
+      width: parseInt(match[1], 10),
+      height: parseInt(match[2], 10),
+    };
+  }
+  return null;
+}
+
 // Utility to guess resolution from Twitter video url (e.g. /720x1280/ or /1280x720/)
 function extractTwitterQuality(url: string): string {
-  const match = url.match(/\/(\d+x\d+)\//);
-  if (match) {
-    const res = match[1].split('x');
-    const height = Math.min(parseInt(res[0], 10), parseInt(res[1], 10));
+  const dims = extractTwitterDimensions(url);
+  if (dims) {
+    const height = Math.min(dims.width, dims.height);
     if (height >= 1080) return '1080p';
     if (height >= 720) return '720p';
     if (height >= 480) return '480p';
