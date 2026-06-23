@@ -271,12 +271,6 @@ function App() {
                   className="url-input"
                 />
               </div>
-              {extractedUrl && (
-                <div className="extracted-url-hint">
-                  <span className="extracted-label">已识别链接:</span>
-                  <span className="extracted-link">{extractedUrl}</span>
-                </div>
-              )}
             </div>
             <button
               type="submit"
@@ -287,6 +281,13 @@ function App() {
               {isLoading ? '解析中...' : '解析链接'}
             </button>
           </form>
+
+          {extractedUrl && (
+            <div className="extracted-url-hint">
+              <span className="extracted-label">识别到链接：</span>
+              <span className="extracted-link">{extractedUrl}</span>
+            </div>
+          )}
 
           {error && (
             <div className="error-alert">

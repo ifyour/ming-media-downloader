@@ -353,16 +353,16 @@
   border: 1px solid var(--gray-alpha-400);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-raised);
-  padding: var(--space-6);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   margin-bottom: 20px;
 }
 
-@media (max-width: 600px) {
+@media (min-width: 601px) {
   .result-card {
-    padding: var(--space-4);
+    padding: var(--space-6);
   }
 }
 
@@ -468,14 +468,14 @@
 /* Media layout (cover + download actions) */
 .media-preview-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-6);
   margin-top: var(--space-1);
 }
 
-@media (max-width: 768px) {
+@media (min-width: 769px) {
   .media-preview-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -485,8 +485,8 @@
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--gray-100);
-  aspect-ratio: 9 / 16;
-  max-height: 360px;
+  aspect-ratio: 16 / 9;
+  max-height: 200px;
 }
 
 .media-cover {
@@ -538,6 +538,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--background-100);
   border: 1px solid var(--gray-alpha-300);
@@ -552,7 +554,9 @@
 .format-info {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
+  min-width: 0;
 }
 
 .quality-label {
@@ -684,13 +688,14 @@
   border: 1px solid var(--gray-alpha-400);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-raised);
-  padding: var(--space-6);
+  padding: var(--space-4);
   padding-top: 16px;
 }
 
-@media (max-width: 600px) {
+@media (min-width: 601px) {
   .history-section {
-    padding: var(--space-4);
+    padding: var(--space-6);
+    padding-top: 16px;
   }
 }
 
@@ -853,17 +858,25 @@
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 768px) {
+.parse-form {
+  flex-direction: column;
+}
+
+.submit-btn {
+  width: 100%;
+}
+
+@media (min-width: 769px) {
   .parse-form {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .submit-btn {
-    width: 100%;
+    width: auto;
   }
 
   .cover-wrapper {
-    aspect-ratio: 16 / 9;
-    max-height: 200px;
+    aspect-ratio: 9 / 16;
+    max-height: 360px;
   }
 }

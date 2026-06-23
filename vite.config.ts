@@ -3,6 +3,17 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  css: {
+    transformer: 'lightningcss',
+    lightningcss: {
+      targets: {
+        ios_saf: 12 << 16,
+      },
+    },
+  },
+  build: {
+    cssTarget: 'safari11',
+  },
   plugins: [
     react(),
     VitePWA({
