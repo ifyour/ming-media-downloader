@@ -277,7 +277,8 @@ async function parseWithCache(url: string, env: Env, ctx: ExecutionContext): Pro
   // 可能过期区间（3 天及以上）或无缓存：穿透缓存，优先请求源站
   try {
     const fresh = await parseMediaUrl(resolvedUrl, env);
-    await setCacheResult(env.MMD_CACHE, cacheKey, fresh);
+    // 缓存写入是 best-effort：失败只打日志，不阻塞、不抛错给用户
+    ctx.waitUntil(setCacheResult(env.MMD_CACHE, cacheKey, fresh));
     return fresh;
   } catch (err) {
     // 终极兜底：源站挂了/失败，无视时间直接返回缓存
