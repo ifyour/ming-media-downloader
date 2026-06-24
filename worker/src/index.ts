@@ -1,4 +1,5 @@
 export interface Env {
+  MMD_CACHE: KVNamespace;
   // Add bindings here if needed, e.g. MYBROWSER for Cloudflare Browser Rendering
   MYBROWSER?: unknown;
 }
@@ -76,6 +77,7 @@ function jsonResponse(data: JsonValue, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
       ...corsHeaders,
     },
   });
@@ -87,7 +89,6 @@ function errorResponse(message: string, status = 400) {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    void ctx;
     const urlObj = new URL(request.url);
     const path = urlObj.pathname;
 
@@ -105,7 +106,7 @@ export default {
       }
 
       try {
-        const result = await parseMediaUrl(targetUrl, env);
+        const result = await parseWithCache(targetUrl, env, ctx);
         return jsonResponse(result as unknown as JsonValue);
       } catch (err) {
         return errorResponse(getErrorMessage(err), 500);
@@ -182,6 +183,109 @@ async function parseMediaUrl(url: string, env: Env): Promise<MediaResult> {
     return await parseTwitter(resolvedUrl);
   } else {
     throw new Error('Unsupported platform. Only Xiaohongshu (小红书) and X (Twitter) are supported.');
+  }
+}
+
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
+interface CacheMeta {
+  cachedAt: number;
+}
+
+interface CacheEntry {
+  data: MediaResult;
+  meta: CacheMeta;
+}
+
+function getCacheKey(resolvedUrl: string): string | null {
+  try {
+    const parsed = new URL(resolvedUrl);
+    const host = parsed.hostname.toLowerCase();
+
+    if (host.includes('xiaohongshu.com') || host.includes('rednote.com')) {
+      const match = parsed.pathname.match(/(?:explore|item)\/([a-zA-Z0-9]+)/);
+      if (match) return `xhs:${match[1]}`;
+    }
+
+    if (host.includes('twitter.com') || host.includes('x.com')) {
+      const match = parsed.pathname.match(/status\/(\d+)/);
+      if (match) return `tw:${match[1]}`;
+    }
+  } catch {
+    // ignore invalid URLs
+  }
+  return null;
+}
+
+async function getCacheResult(kv: KVNamespace, key: string): Promise<CacheEntry | null> {
+  try {
+    const result = await kv.getWithMetadata<MediaResult, CacheMeta>(key, { type: 'json' });
+    if (!result.value || !result.metadata) return null;
+    return { data: result.value, meta: result.metadata };
+  } catch (err) {
+    console.error('KV get failed:', err);
+    return null;
+  }
+}
+
+async function setCacheResult(kv: KVNamespace, key: string, data: MediaResult): Promise<void> {
+  try {
+    await kv.put(key, JSON.stringify(data), {
+      metadata: { cachedAt: Date.now() },
+    });
+  } catch (err) {
+    console.error('KV put failed:', err);
+  }
+}
+
+async function refreshCache(resolvedUrl: string, env: Env, cacheKey: string): Promise<void> {
+  try {
+    const fresh = await parseMediaUrl(resolvedUrl, env);
+    await setCacheResult(env.MMD_CACHE, cacheKey, fresh);
+  } catch (err) {
+    console.error('Background cache refresh failed:', err);
+  }
+}
+
+async function parseWithCache(url: string, env: Env, ctx: ExecutionContext): Promise<MediaResult> {
+  const resolvedUrl = await resolveUrl(url);
+  const cacheKey = getCacheKey(resolvedUrl);
+
+  if (!cacheKey) {
+    return parseMediaUrl(resolvedUrl, env);
+  }
+
+  const cached = await getCacheResult(env.MMD_CACHE, cacheKey);
+  const now = Date.now();
+
+  if (cached) {
+    const age = now - cached.meta.cachedAt;
+
+    // 绝对新鲜区间：0 ~ 12 小时，直接走缓存
+    if (age < TWELVE_HOURS_MS) {
+      return cached.data;
+    }
+
+    // 次鲜/尝试刷新区间：12 小时 ~ 3 天，先吐缓存，后台异步刷新
+    if (age < THREE_DAYS_MS) {
+      ctx.waitUntil(refreshCache(resolvedUrl, env, cacheKey));
+      return cached.data;
+    }
+  }
+
+  // 可能过期区间（3 天及以上）或无缓存：穿透缓存，优先请求源站
+  try {
+    const fresh = await parseMediaUrl(resolvedUrl, env);
+    await setCacheResult(env.MMD_CACHE, cacheKey, fresh);
+    return fresh;
+  } catch (err) {
+    // 终极兜底：源站挂了/失败，无视时间直接返回缓存
+    if (cached) {
+      console.error('Fresh fetch failed, serving stale cache:', err);
+      return cached.data;
+    }
+    throw err;
   }
 }
 

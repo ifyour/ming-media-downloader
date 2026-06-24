@@ -2,6 +2,13 @@ name = "ming-media-downloader-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
+# Cache storage for /api/parse results.
+# Create the namespace with: wrangler kv namespace create "MMD_CACHE"
+# Then paste the returned id below.
+[[kv_namespaces]]
+binding = "MMD_CACHE"
+id = "2eec2097d5644ce4be6353715051eed7"
+
 # If the user wants to enable Cloudflare Browser Rendering, they can uncomment the following binding:
 # [browser]
 # binding = "MYBROWSER"
