@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import './App.css';
 
@@ -51,7 +51,12 @@ function proxiedImage(url: string): string {
 }
 
 function App() {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [inputText, setInputText] = useState('');
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -263,6 +268,7 @@ function App() {
             <div className="input-wrapper">
               <div className="input-group">
                 <input
+                  ref={inputRef}
                   type="text"
                   value={inputText}
                   onChange={(e) => handleInputChange(e.target.value)}
