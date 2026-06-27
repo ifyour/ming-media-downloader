@@ -18,12 +18,12 @@
     "deploy": "pnpm deploy:backend && pnpm deploy:frontend",
     "deploy:frontend": "pnpm build && wrangler pages deploy dist --project-name ming-media-downloader",
     "deploy:backend": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api",
-    "test": "vitest run --exclude '**/*.fallback.test.ts'",
-    "test:full": "vitest run",
-    "test:fallback": "vitest run 'tests/worker/**/*.fallback.test.ts'",
-    "test:frontend": "vitest run --project frontend",
-    "test:worker": "vitest run --project worker",
-    "test:watch": "vitest"
+    "test": "vitest run --config vitest.worker.config.ts --passWithNoTests --exclude '**/*.fallback.test.ts' && vitest run --config vitest.frontend.config.ts --passWithNoTests",
+    "test:full": "vitest run --config vitest.worker.config.ts --passWithNoTests && vitest run --config vitest.frontend.config.ts --passWithNoTests",
+    "test:fallback": "vitest run --config vitest.worker.config.ts --passWithNoTests tests/worker/**/*.fallback.test.ts",
+    "test:frontend": "vitest run --config vitest.frontend.config.ts --passWithNoTests",
+    "test:worker": "vitest run --config vitest.worker.config.ts --passWithNoTests",
+    "test:watch": "vitest --config vitest.frontend.config.ts --config vitest.worker.config.ts --exclude '**/*.fallback.test.ts'"
   },
   "dependencies": {
     "@fontsource/geist-mono": "^5.2.8",
@@ -34,6 +34,7 @@
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.20",
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
