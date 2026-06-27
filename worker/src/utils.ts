@@ -81,7 +81,7 @@ export async function resolveUrl(url: string): Promise<string> {
 }
 
 export function extractTwitterDimensions(url: string): { width: number; height: number } | null {
-  const match = url.match(/\/(\d+)x(\d+)\//);
+  const match = url.match(/\/(\d+)x(\d+)/);
   if (match) {
     return {
       width: parseInt(match[1], 10),
@@ -94,7 +94,7 @@ export function extractTwitterDimensions(url: string): { width: number; height: 
 export function extractTwitterQuality(url: string): string {
   const dims = extractTwitterDimensions(url);
   if (dims) {
-    const height = Math.min(dims.width, dims.height);
+    const height = dims.height;
     if (height >= 1080) return '1080p';
     if (height >= 720) return '720p';
     if (height >= 480) return '480p';
