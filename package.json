@@ -17,7 +17,13 @@
     "lint": "eslint .",
     "deploy": "pnpm deploy:backend && pnpm deploy:frontend",
     "deploy:frontend": "pnpm build && wrangler pages deploy dist --project-name ming-media-downloader",
-    "deploy:backend": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api"
+    "deploy:backend": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api",
+    "test": "vitest run --exclude '**/*.fallback.test.ts'",
+    "test:full": "vitest run",
+    "test:fallback": "vitest run 'tests/worker/**/*.fallback.test.ts'",
+    "test:frontend": "vitest run --project frontend",
+    "test:worker": "vitest run --project worker",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fontsource/geist-mono": "^5.2.8",
@@ -29,6 +35,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -38,10 +47,12 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
     "lightningcss": "^1.32.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
+    "vitest": "^4.1.9",
     "wrangler": "^4.103.0"
   }
 }
