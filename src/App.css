@@ -402,8 +402,8 @@
   color: #fff;
 }
 
-.platform-tag[data-platform="xiaohongshu"] {
-  background: var(--color-xhs);
+.platform-tag[data-platform="rednote"] {
+  background: var(--color-rednote);
 }
 
 .platform-tag[data-platform="twitter"] {
@@ -780,8 +780,8 @@
   justify-content: center;
 }
 
-.hist-platform.xiaohongshu {
-  background: var(--color-xhs);
+.hist-platform.rednote {
+  background: var(--color-rednote);
 }
 
 .hist-platform.twitter {

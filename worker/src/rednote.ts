@@ -1,10 +1,10 @@
 import type { Env, MediaResult, Author, JsonValue } from './types';
 import { isRecord, getString, getNumber, getArray, getRecord, getErrorMessage } from './utils';
 
-export async function parseXiaohongshu(url: string, env: Env): Promise<MediaResult> {
+export async function parseRednote(url: string, env: Env): Promise<MediaResult> {
   const matchId = url.match(/(?:explore|item)\/([a-zA-Z0-9]+)/);
   if (!matchId) {
-    throw new Error('Invalid Xiaohongshu URL. Could not find note ID.');
+    throw new Error('Invalid RedNote URL. Could not find note ID.');
   }
   const noteId = matchId[1];
 
@@ -41,7 +41,7 @@ export async function parseXiaohongshu(url: string, env: Env): Promise<MediaResu
   }
 
   if (!html) {
-    throw new Error(`Failed to fetch Xiaohongshu page${lastFetchStatus ? ` (status ${lastFetchStatus})` : ''}${lastFetchError ? `: ${lastFetchError}` : ''}.`);
+    throw new Error(`Failed to fetch RedNote page${lastFetchStatus ? ` (status ${lastFetchStatus})` : ''}${lastFetchError ? `: ${lastFetchError}` : ''}.`);
   }
 
   let state = parseInitialState(html);
@@ -78,7 +78,7 @@ export async function parseXiaohongshu(url: string, env: Env): Promise<MediaResu
   const detail = noteDetailMapState ? getRecord(noteDetailMapState, noteId) : null;
   if (!detail) {
     const statusHint = lastFetchStatus ? ` (last fetch status: ${lastFetchStatus})` : '';
-    throw new Error(`Failed to parse Xiaohongshu note data.${statusHint} The page structure might have changed or requests are being blocked. Please try again.`);
+    throw new Error(`Failed to parse RedNote note data.${statusHint} The page structure might have changed or requests are being blocked. Please try again.`);
   }
 
   const note = getRecord(detail, 'note');
@@ -95,12 +95,12 @@ export async function parseXiaohongshu(url: string, env: Env): Promise<MediaResu
   const cover = getString(firstImage, 'urlDefault') || (video ? getString(getRecord(video, 'image'), 'url') : '');
   const user = getRecord(note, 'user');
   const author: Author = {
-    name: user ? getString(user, 'nickname') : 'Xiaohongshu User',
+    name: user ? getString(user, 'nickname') : 'RedNote User',
     avatar: user ? getString(user, 'avatar') : '',
   };
 
   const result: MediaResult = {
-    platform: 'xiaohongshu',
+    platform: 'rednote',
     id: noteId,
     type: type === 'video' ? 'video' : 'images',
     title,

@@ -165,7 +165,7 @@ function AppContent({
               ✕
             </button>
             <div className="platform-tag" data-platform={result.platform}>
-              {result.platform === 'xiaohongshu' ? '📕 小红书' : '🐦 X (Twitter)'}
+              {result.platform === 'rednote' ? '📕 小红书' : '🐦 X (Twitter)'}
             </div>
 
             <div className="result-header">
@@ -266,7 +266,7 @@ function AppContent({
                 >
                   <div className="history-meta">
                     <span className={`hist-platform ${item.platform}`}>
-                      {item.platform === 'xiaohongshu' ? 'XHS' : '𝕏'}
+                      {item.platform === 'rednote' ? 'Red' : '𝕏'}
                     </span>
                     <span className="hist-type">{item.type === 'video' ? '🎬' : '🖼️'}</span>
                   </div>

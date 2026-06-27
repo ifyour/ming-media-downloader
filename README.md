@@ -96,7 +96,7 @@ ming-media-downloader/
 │   ├── src/
 │   │   ├── index.ts              # 入口 + 路由分发
 │   │   ├── parse.ts              # 解析编排
-│   │   ├── xiaohongshu.ts        # 小红书解析器
+│   │   ├── rednote.ts            # 小红书解析器
 │   │   ├── twitter.ts            # X/Twitter 解析器
 │   │   ├── handlers.ts           # 图片/下载代理
 │   │   ├── cache.ts              # KV 缓存
@@ -157,7 +157,7 @@ Cloudflare Pages (functions/api/[[path]].ts)
     ▼
 Cloudflare Worker
     │
-    ├── parse.ts → xiaohongshu.ts（SSR HTML 解析）
+    ├── parse.ts → rednote.ts（SSR HTML 解析）
     │             → twitter.ts（fxtwitter API）
     ├── cache.ts → KV（MMD_CACHE）
     ├── handlers.ts → 图片代理 / 下载代理

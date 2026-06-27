@@ -24,7 +24,7 @@ export interface VideoFormat {
 }
 
 export interface MediaResult {
-  platform: 'xiaohongshu' | 'twitter';
+  platform: 'rednote' | 'twitter';
   id: string;
   type: 'video' | 'images';
   title: string;

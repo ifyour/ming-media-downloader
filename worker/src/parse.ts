@@ -1,7 +1,7 @@
 import type { Env, MediaResult } from './types';
 import { resolveUrl } from './utils';
 import { getCacheKey, getCacheResult, setCacheResult } from './cache';
-import { parseXiaohongshu } from './xiaohongshu';
+import { parseRednote } from './rednote';
 import { parseTwitter } from './twitter';
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
@@ -13,11 +13,11 @@ export async function parseMediaUrl(url: string, env: Env): Promise<MediaResult>
   const host = parsedUrl.hostname.toLowerCase();
 
   if (host.includes('xiaohongshu.com') || host.includes('rednote.com') || host.includes('xhslink.com')) {
-    return await parseXiaohongshu(resolvedUrl, env);
+    return await parseRednote(resolvedUrl, env);
   } else if (host.includes('twitter.com') || host.includes('x.com')) {
     return await parseTwitter(resolvedUrl);
   } else {
-    throw new Error('Unsupported platform. Only Xiaohongshu (小红书) and X (Twitter) are supported.');
+    throw new Error('Unsupported platform. Only RedNote (小红书) and X (Twitter) are supported.');
   }
 }
 
