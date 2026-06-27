@@ -9,7 +9,6 @@ export default defineConfig({
   ],
   test: {
     include: ['tests/worker/**/*.test.ts'],
-    exclude: ['tests/worker/**/*.fallback.test.ts'],
     passWithNoTests: true,
   },
 })

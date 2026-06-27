@@ -20,7 +20,7 @@
     "deploy:backend": "wrangler deploy worker/src/index.ts --name ming-media-downloader-api",
     "test": "vitest run --config vitest.worker.config.ts --passWithNoTests --exclude '**/*.fallback.test.ts' && vitest run --config vitest.frontend.config.ts --passWithNoTests",
     "test:full": "vitest run --config vitest.worker.config.ts --passWithNoTests && vitest run --config vitest.frontend.config.ts --passWithNoTests",
-    "test:fallback": "vitest run --config vitest.worker.config.ts tests/worker/**/*.fallback.test.ts",
+    "test:fallback": "vitest run --config vitest.worker.config.ts tests/worker/*.fallback.test.ts",
     "test:frontend": "vitest run --config vitest.frontend.config.ts --passWithNoTests",
     "test:worker": "vitest run --config vitest.worker.config.ts --passWithNoTests",
     "test:watch": "vitest --config vitest.worker.config.ts --exclude '**/*.fallback.test.ts'",
