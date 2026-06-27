@@ -45,7 +45,7 @@ export default function App() {
         setIsLoading(false);
         setLoadingStep('');
       });
-  }, []);
+  }, [setError, setInputText, setIsLoading, setLoadingStep, setResult]);
 
   const handleInputChange = (text: string) => {
     setInputText(text);
@@ -142,7 +142,7 @@ export default function App() {
     setExtractedUrl(null);
     setShareId(null);
     window.history.replaceState(null, '', window.location.pathname);
-  }, []);
+  }, [setError, setExtractedUrl, setInputText, setResult, setShareId]);
 
   return (
     <AppContent
