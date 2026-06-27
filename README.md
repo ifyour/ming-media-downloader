@@ -73,6 +73,26 @@ pnpm preview
 pnpm lint
 ```
 
+### 测试
+
+项目使用 [Vitest](https://vitest.dev/) 4 进行测试，覆盖 Worker 后端和 React 前端。
+
+| 命令 | 说明 |
+|------|------|
+| `pnpm test` | 运行所有主测试（排除降级测试） |
+| `pnpm test:full` | 运行全部测试（含降级测试） |
+| `pnpm test:worker` | 仅运行 Worker 后端测试 |
+| `pnpm test:frontend` | 仅运行前端测试 |
+| `pnpm test:fallback` | 仅运行降级路径测试 |
+| `pnpm test:watch` | 监听模式（Watcher） |
+
+```bash
+pnpm test        # 每次提交前运行
+pnpm test:full   # 大版本发布前运行
+```
+
+Worker 测试在 Miniflare（workerd）运行时中执行，支持 `HTMLRewriter`、`KVNamespace` 等真实 Cloudflare Workers API。前端测试使用 jsdom 环境。
+
 ## 项目结构
 
 ```
