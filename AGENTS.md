@@ -32,6 +32,10 @@ pnpm deploy:frontend  # build → wrangler pages deploy dist
 
 ## Testing
 
+### Pre-commit hook
+
+`.githooks/pre-commit` runs `pnpm test && pnpm build` on every `git commit`. Configured via `git config core.hooksPath .githooks` (tracked in the repo). Pass `--no-verify` to skip (WIP commits).
+
 ### Architecture
 
 Two separate Vitest configs (Vitest 4 removed `defineWorkspace`):

@@ -87,9 +87,11 @@ pnpm lint
 | `pnpm test:watch` | 监听模式（Watcher） |
 
 ```bash
-pnpm test        # 每次提交前运行
+pnpm test        # 每次提交前运行（pre-commit hook 自动执行）
 pnpm test:full   # 大版本发布前运行
 ```
+
+> 项目配置了 Git pre-commit hook（`.githooks/pre-commit`），每次 `git commit` 时自动运行 `pnpm test && pnpm build`。如需跳过（如 WIP），使用 `git commit --no-verify`。
 
 Worker 测试在 Miniflare（workerd）运行时中执行，支持 `HTMLRewriter`、`KVNamespace` 等真实 Cloudflare Workers API。前端测试使用 jsdom 环境。
 

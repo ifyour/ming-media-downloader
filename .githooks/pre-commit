@@ -1,0 +1,20 @@
+#!/bin/sh
+# Pre-commit hook — run test suite and build before every commit.
+# Skips if `--no-verify` (-n) is passed to `git commit`.
+# Configured via: git config core.hooksPath .githooks
+
+echo "=== Pre-commit: running tests ==="
+pnpm test
+if [ $? -ne 0 ]; then
+  echo "FAILED: Tests must pass before committing."
+  exit 1
+fi
+
+echo "=== Pre-commit: running build (typecheck + bundle) ==="
+pnpm build
+if [ $? -ne 0 ]; then
+  echo "FAILED: Build must succeed before committing."
+  exit 1
+fi
+
+echo "=== Pre-commit: all checks passed ==="
