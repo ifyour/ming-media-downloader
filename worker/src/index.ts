@@ -5,6 +5,15 @@ import { handleImageProxy, handleProxyDownload } from './handlers';
 
 export { parseMediaUrl } from './parse';
 
+function generateShareId(): string {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let id = '';
+  for (let i = 0; i < 8; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const urlObj = new URL(request.url);
@@ -54,6 +63,51 @@ export default {
       } catch (err) {
         return errorResponse(getErrorMessage(err), 500);
       }
+    }
+
+    if (path === '/api/share') {
+      if (request.method === 'POST') {
+        try {
+          const body = await request.json() as { url: string; result: unknown };
+          if (!body.url || !body.result) {
+            return errorResponse('Missing "url" or "result" in body');
+          }
+
+          let shareId = generateShareId();
+          let attempts = 0;
+          while (await env.MMD_CACHE.get(`share:${shareId}`) !== null && attempts < 5) {
+            shareId = generateShareId();
+            attempts++;
+          }
+
+          await env.MMD_CACHE.put(`share:${shareId}`, JSON.stringify(body), {
+            expirationTtl: 604800,
+          });
+
+          return jsonResponse({ shareId });
+        } catch (err) {
+          return errorResponse(getErrorMessage(err), 500);
+        }
+      }
+
+      if (request.method === 'GET') {
+        const shareId = urlObj.searchParams.get('id');
+        if (!shareId) {
+          return errorResponse('Missing "id" parameter');
+        }
+
+        try {
+          const data = await env.MMD_CACHE.get(`share:${shareId}`);
+          if (!data) {
+            return errorResponse('分享链接无效或已过期', 404);
+          }
+          return jsonResponse(JSON.parse(data) as JsonValue);
+        } catch (err) {
+          return errorResponse(getErrorMessage(err), 500);
+        }
+      }
+
+      return errorResponse('Method not allowed', 405);
     }
 
     return jsonResponse({ message: 'Social Media Video Downloader API' });

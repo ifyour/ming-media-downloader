@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import type { MediaResult, HistoryItem } from './types';
 import { proxiedImage, formatBytes } from './utils';
 import { VideoOptions } from './components/VideoOptions';
@@ -12,6 +13,7 @@ interface AppContentProps {
   loadingStep: string;
   error: string | null;
   result: MediaResult | null;
+  shareId: string | null;
   history: HistoryItem[];
   downloadingKey: string | null;
   downloadProgress: { loaded: number; total: number } | null;
@@ -24,6 +26,52 @@ interface AppContentProps {
   onHistoryClick: (url: string) => void;
 }
 
+function ShareBox({ shareId }: { shareId: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const input = document.getElementById('share-url-input') as HTMLInputElement;
+      input?.select();
+      document.execCommand('copy');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [shareUrl]);
+
+  return (
+    <div className="share-section">
+      <div className="share-header">
+        <span className="share-icon">🔗</span>
+        <span className="share-label">分享结果</span>
+      </div>
+      <div className="share-link-row">
+        <input
+          id="share-url-input"
+          type="text"
+          readOnly
+          value={shareUrl}
+          className="share-link-input"
+          onClick={(e) => (e.target as HTMLInputElement).select()}
+        />
+        <button
+          type="button"
+          className={`copy-share-btn ${copied ? 'copied' : ''}`}
+          onClick={handleCopy}
+        >
+          {copied ? '已复制' : '复制链接'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AppContent({
   inputRef,
   inputText,
@@ -32,6 +80,7 @@ function AppContent({
   loadingStep,
   error,
   result,
+  shareId,
   history,
   downloadingKey,
   downloadProgress,
@@ -195,6 +244,8 @@ function AppContent({
                 </div>
               )}
             </div>
+
+            {shareId && <ShareBox shareId={shareId} />}
           </section>
         )}
 

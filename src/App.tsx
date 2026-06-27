@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import { useParseState, useLoadingState, useHistoryState, useDownload } from './hooks';
 import { extractUrl } from './extractUrl';
 import { addToHistory } from './history';
@@ -13,9 +13,37 @@ export default function App() {
   const { isLoading, setIsLoading, loadingStep, setLoadingStep } = useLoadingState();
   const { history, setHistory } = useHistoryState();
   const { downloadingKey, downloadProgress, triggerDownload, downloadImage } = useDownload(result);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('share');
+    if (!id) return;
+
+    setShareId(id);
+    setIsLoading(true);
+    setLoadingStep('正在加载分享内容...');
+
+    fetch(`/api/share?id=${encodeURIComponent(id)}`)
+      .then(res => {
+        if (!res.ok) return res.json().then(d => { throw new Error(d.error || '分享链接无效或已过期'); });
+        return res.json();
+      })
+      .then(data => {
+        setResult(data.result);
+        setInputText(data.url);
+      })
+      .catch(err => {
+        setError(getErrorMessage(err));
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setLoadingStep('');
+      });
   }, []);
 
   const handleInputChange = (text: string) => {
@@ -29,6 +57,7 @@ export default function App() {
     if (!text.trim()) {
       setResult(null);
       setError(null);
+      setShareId(null);
     }
   };
 
@@ -36,6 +65,7 @@ export default function App() {
     e.preventDefault();
     setError(null);
     setResult(null);
+    setShareId(null);
 
     const targetUrl = extractUrl(inputText);
     if (!targetUrl) {
@@ -66,6 +96,21 @@ export default function App() {
         title: data.title || data.desc || '无标题内容',
         url: targetUrl,
       });
+
+      fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: targetUrl, result: data }),
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(share => {
+          if (share?.shareId) {
+            setShareId(share.shareId);
+            const newUrl = `${window.location.pathname}?share=${share.shareId}`;
+            window.history.replaceState({ shareId: share.shareId }, '', newUrl);
+          }
+        })
+        .catch(err => console.error('Failed to create share:', err));
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err));
@@ -88,6 +133,15 @@ export default function App() {
     }, 100);
   };
 
+  const handleClearResult = useCallback(() => {
+    setInputText('');
+    setResult(null);
+    setError(null);
+    setExtractedUrl(null);
+    setShareId(null);
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
+
   return (
     <AppContent
       inputRef={inputRef}
@@ -97,6 +151,7 @@ export default function App() {
       loadingStep={loadingStep}
       error={error}
       result={result}
+      shareId={shareId}
       history={history}
       downloadingKey={downloadingKey}
       downloadProgress={downloadProgress}
@@ -104,7 +159,7 @@ export default function App() {
       downloadImage={downloadImage}
       onInputChange={handleInputChange}
       onParse={handleParse}
-      onClearResult={() => { setInputText(''); setResult(null); setError(null); setExtractedUrl(null); }}
+      onClearResult={handleClearResult}
       onClearHistory={clearHistory}
       onHistoryClick={handleHistoryClick}
     />
