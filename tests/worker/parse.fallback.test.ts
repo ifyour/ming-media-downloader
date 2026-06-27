@@ -8,13 +8,15 @@ describe('parseWithCache — degradation paths', () => {
   let mockFetch: ReturnType<typeof vi.fn>
   let mockEnv: Env
   let mockCtx: ExecutionContext
+  let mockCacheGetWithMetadata: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch
+    mockCacheGetWithMetadata = vi.fn()
     mockEnv = {
       MMD_CACHE: {
-        getWithMetadata: vi.fn(),
+        getWithMetadata: mockCacheGetWithMetadata,
         put: vi.fn(),
         get: vi.fn(),
       } as unknown as KVNamespace,
@@ -34,7 +36,7 @@ describe('parseWithCache — degradation paths', () => {
   }
 
   it('returns stale cache when fresh fetch fails', async () => {
-    vi.mocked(mockEnv.MMD_CACHE.getWithMetadata).mockResolvedValue({
+    mockCacheGetWithMetadata.mockResolvedValue({
       value: staleData,
       metadata: { cachedAt: Date.now() - 4 * 24 * 60 * 60 * 1000 },
     })
@@ -46,7 +48,7 @@ describe('parseWithCache — degradation paths', () => {
   })
 
   it('re-throws error when no cache available and fetch fails', async () => {
-    vi.mocked(mockEnv.MMD_CACHE.getWithMetadata).mockResolvedValue({ value: null, metadata: null })
+    mockCacheGetWithMetadata.mockResolvedValue({ value: null, metadata: null })
     mockFetch.mockResolvedValue({ ok: false, status: 500, text: async () => 'err' })
 
     await expect(
@@ -55,7 +57,7 @@ describe('parseWithCache — degradation paths', () => {
   })
 
   it('triggers background refresh for stale cache (12h-3d)', async () => {
-    vi.mocked(mockEnv.MMD_CACHE.getWithMetadata).mockResolvedValue({
+    mockCacheGetWithMetadata.mockResolvedValue({
       value: staleData,
       metadata: { cachedAt: Date.now() - 18 * 60 * 60 * 1000 },
     })
@@ -90,7 +92,7 @@ describe('parseWithCache — degradation paths', () => {
 
       const result = await parseWithCache('https://x.com/user/status/999?extra=param', mockEnv, mockCtx)
       expect(result.title).toBe('No cache key')
-      expect(mockEnv.MMD_CACHE.getWithMetadata).not.toHaveBeenCalled()
+      expect(mockCacheGetWithMetadata).not.toHaveBeenCalled()
     } finally {
       spy.mockRestore()
     }

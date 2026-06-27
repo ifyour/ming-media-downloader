@@ -9,7 +9,7 @@ describe('parseRednote', () => {
 
   beforeEach(() => {
     mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch
     mockEnv = { MMD_CACHE: {} as KVNamespace }
   })
 

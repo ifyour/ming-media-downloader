@@ -7,7 +7,7 @@ describe('handleImageProxy', () => {
 
   beforeEach(() => {
     mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch
   })
 
   afterEach(() => {
@@ -47,7 +47,7 @@ describe('handleProxyDownload', () => {
 
   beforeEach(() => {
     mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch
   })
 
   afterEach(() => {

@@ -7,13 +7,15 @@ describe('parseWithCache', () => {
   let mockFetch: ReturnType<typeof vi.fn>
   let mockEnv: Env
   let mockCtx: ExecutionContext
+  let mockCacheGetWithMetadata: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch
+    mockCacheGetWithMetadata = vi.fn()
     mockEnv = {
       MMD_CACHE: {
-        getWithMetadata: vi.fn(),
+        getWithMetadata: mockCacheGetWithMetadata,
         put: vi.fn(),
         get: vi.fn(),
       } as unknown as KVNamespace,
@@ -26,7 +28,7 @@ describe('parseWithCache', () => {
   })
 
   it('delegates rednote URLs to parseRednote', async () => {
-    vi.mocked(mockEnv.MMD_CACHE.getWithMetadata).mockResolvedValue({ value: null, metadata: null })
+    mockCacheGetWithMetadata.mockResolvedValue({ value: null, metadata: null })
     const stateJson = JSON.stringify({
       note: { noteDetailMap: { abc123: { note: { title: 'RN', desc: '', type: 'normal', imageList: [], user: { nickname: 'A', avatar: '' } } } } },
     })
@@ -41,7 +43,7 @@ describe('parseWithCache', () => {
   })
 
   it('delegates twitter URLs to parseTwitter', async () => {
-    vi.mocked(mockEnv.MMD_CACHE.getWithMetadata).mockResolvedValue({ value: null, metadata: null })
+    mockCacheGetWithMetadata.mockResolvedValue({ value: null, metadata: null })
     const tweetData = {
       tweet: {
         text: 'Tweet test',
@@ -71,7 +73,7 @@ describe('parseWithCache', () => {
       author: { name: 'U', avatar: '' },
       videos: [], images: [],
     }
-    vi.mocked(mockEnv.MMD_CACHE.getWithMetadata).mockResolvedValue({
+    mockCacheGetWithMetadata.mockResolvedValue({
       value: cachedData,
       metadata: { cachedAt: Date.now() - 1000 },
     })
