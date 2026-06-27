@@ -914,7 +914,9 @@
 }
 
 .copy-share-btn.copied {
-  background: var(--green-600);
+  background: var(--gray-800);
+  cursor: default;
+  pointer-events: none;
 }
 
 /* ---- Fade-in Animation ---- */

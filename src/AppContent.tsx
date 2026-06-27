@@ -48,8 +48,7 @@ function ShareBox({ shareId }: { shareId: string }) {
   return (
     <div className="share-section">
       <div className="share-header">
-        <span className="share-icon">🔗</span>
-        <span className="share-label">分享结果</span>
+        <span className="share-label">分享链接</span>
       </div>
       <div className="share-link-row">
         <input
