@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useParseState, useLoadingState, useHistoryState } from '../../src/hooks'
 import type { MediaResult, HistoryItem } from '../../src/types'

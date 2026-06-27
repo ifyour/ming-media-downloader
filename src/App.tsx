@@ -24,6 +24,7 @@ export default function App() {
     const id = params.get('share');
     if (!id) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShareId(id);
     setIsLoading(true);
     setLoadingStep('正在加载分享内容...');
