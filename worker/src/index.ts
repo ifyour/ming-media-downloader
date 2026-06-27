@@ -88,7 +88,11 @@ export default {
           const existingShareId = await env.MMD_CACHE.get(`url_share:${urlHash}`);
 
           if (existingShareId) {
-            await env.MMD_CACHE.put(`url_share:${urlHash}`, existingShareId, { expirationTtl: 604800 });
+            // 续期 TTL — 失败不影响已有分享，静默处理
+            await env.MMD_CACHE.put(
+              `url_share:${urlHash}`, existingShareId,
+              { expirationTtl: 604800 },
+            ).catch((e: unknown) => console.error('Renew share TTL failed:', e));
             return jsonResponse({ shareId: existingShareId });
           }
 
@@ -102,9 +106,16 @@ export default {
           await env.MMD_CACHE.put(`share:${shareId}`, JSON.stringify(body), {
             expirationTtl: 604800,
           });
-          await env.MMD_CACHE.put(`url_share:${urlHash}`, shareId, {
-            expirationTtl: 604800,
-          });
+
+          // 第二步写入失败 → 清理已写入的 share 数据，避免脏数据
+          try {
+            await env.MMD_CACHE.put(`url_share:${urlHash}`, shareId, {
+              expirationTtl: 604800,
+            });
+          } catch {
+            await env.MMD_CACHE.delete(`share:${shareId}`).catch(() => {});
+            return errorResponse('每日分享次数已达上限，请稍后再试', 500);
+          }
 
           return jsonResponse({ shareId });
         } catch (err) {
