@@ -89,13 +89,14 @@ export default function App() {
       const data: MediaResult = await response.json();
       setResult(data);
 
-      addToHistory({
+      const updatedHistory = addToHistory({
         id: data.id,
         platform: data.platform,
         type: data.type,
         title: data.title || data.desc || '无标题内容',
         url: targetUrl,
       });
+      setHistory(updatedHistory);
 
       fetch('/api/share', {
         method: 'POST',

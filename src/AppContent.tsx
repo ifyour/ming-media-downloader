@@ -283,7 +283,7 @@ function AppContent({
       </main>
 
       <footer className="app-footer">
-        <p className="disclaimer">本工具仅供学习及个人备份使用，请尊重原创作者的版权利益。</p>
+        <p className="disclaimer">本工具仅供个人备份使用，请尊重原创作者版权</p>
       </footer>
     </div>
   );
