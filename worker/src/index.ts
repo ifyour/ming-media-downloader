@@ -14,6 +14,17 @@ function generateShareId(): string {
   return id;
 }
 
+async function hashUrl(url: string): Promise<string> {
+  const data = new TextEncoder().encode(url);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const bytes = new Uint8Array(hash);
+  let hex = '';
+  for (let i = 0; i < 8; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const urlObj = new URL(request.url);
@@ -73,6 +84,14 @@ export default {
             return errorResponse('Missing "url" or "result" in body');
           }
 
+          const urlHash = await hashUrl(body.url);
+          const existingShareId = await env.MMD_CACHE.get(`url_share:${urlHash}`);
+
+          if (existingShareId) {
+            await env.MMD_CACHE.put(`url_share:${urlHash}`, existingShareId, { expirationTtl: 604800 });
+            return jsonResponse({ shareId: existingShareId });
+          }
+
           let shareId = generateShareId();
           let attempts = 0;
           while (await env.MMD_CACHE.get(`share:${shareId}`) !== null && attempts < 5) {
@@ -81,6 +100,9 @@ export default {
           }
 
           await env.MMD_CACHE.put(`share:${shareId}`, JSON.stringify(body), {
+            expirationTtl: 604800,
+          });
+          await env.MMD_CACHE.put(`url_share:${urlHash}`, shareId, {
             expirationTtl: 604800,
           });
 
