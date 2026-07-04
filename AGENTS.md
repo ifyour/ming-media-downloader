@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- **Frontend** (`src/`): React 19 + TypeScript + Vite 8. LightningCSS for CSS (not PostCSS/Sass).
+- **Frontend** (`src/`): React 19 + TypeScript 6.0 + Vite 8. LightningCSS for CSS (not PostCSS/Sass).
 - **Backend** (`worker/`): Cloudflare Worker, source at `worker/src/index.ts`.
 - **Pages Function** (`functions/api/[[path]].ts`): proxies `/api/*` to the deployed Worker at a hardcoded origin. In dev, Vite's `server.proxy` handles this instead.
 - **Entrypoints**: `src/main.tsx` (frontend), `worker/src/index.ts` (backend).
@@ -15,8 +15,8 @@ pnpm build            # tsc -b (typecheck both tsconfigs) then vite build
 pnpm lint             # eslint .
 pnpm preview          # vite preview
 pnpm deploy           # backend then frontend
-pnpm deploy:backend   # wrangler deploy worker/src/index.ts
-pnpm deploy:frontend  # build → wrangler pages deploy dist
+pnpm deploy:backend   # wrangler deploy worker/src/index.ts --name ming-media-downloader-api
+pnpm deploy:frontend  # build → wrangler pages deploy dist --project-name ming-media-downloader
 ```
 
 ## Quirks & gotchas
@@ -25,16 +25,21 @@ pnpm deploy:frontend  # build → wrangler pages deploy dist
 - `tsc -b` uses project references (`tsconfig.json` → `tsconfig.app.json` + `tsconfig.node.json`). Both must compile.
 - `verbatimModuleSyntax` is on: type imports require `import type { ... }`.
 - `erasableSyntaxOnly` is on: no enums, no namespaces, no parameter properties.
+- TypeScript 6.0 — verify compatibility before upgrading any TS-adjacent dependency.
+- LightningCSS CSS transformer targets Safari 11+ (iOS 12+). Not PostCSS — don't add PostCSS plugins/ config.
 - The Worker requires KV namespace `MMD_CACHE` (hardcoded ID in `wrangler.toml`). Without it, cache and share features fail.
 - The Pages Function hardcodes the Worker URL — update if deploying to a different account/domain.
 - PWA is enabled in dev mode (`devOptions.enabled: true`), so `dev-dist/` is generated.
 - `pnpm-workspace.yaml` declares `allowBuilds` for esbuild, sharp, workerd — needed for `pnpm install` and wrangler.
+- PWA icons generated from `public/favicon.svg` via `scripts/generate-pwa-icons.js`.
+- `test:watch` only watches worker tests. Use `test:watch:frontend` for frontend.
+- No CI workflows (`.github/` absent). Pre-commit hook is the only automated check.
 
 ## Testing
 
 ### Pre-commit hook
 
-`.githooks/pre-commit` runs `pnpm test && pnpm build` on every `git commit`. Configured via `git config core.hooksPath .githooks` (tracked in the repo). Pass `--no-verify` to skip (WIP commits).
+`.githooks/pre-commit` runs `pnpm lint && pnpm build && pnpm test` (fail-fast, each step depends on prior). Configured via `git config core.hooksPath .githooks`. Pass `--no-verify` to skip (WIP commits).
 
 ### Architecture
 
@@ -60,7 +65,7 @@ pnpm test:full         # all tests
 pnpm test:worker       # worker only (excl fallback)
 pnpm test:frontend     # frontend only
 pnpm test:fallback     # fallback-only
-pnpm test:watch        # worker watch mode
+pnpm test:watch        # worker watch mode (only worker)
 pnpm test:watch:frontend  # frontend watch mode
 ```
 
