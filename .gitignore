@@ -25,3 +25,4 @@ dev-dist
 *.sw?
 .wrangler
 .superpowers
+.playwright-mcp
