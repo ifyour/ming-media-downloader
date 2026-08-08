@@ -164,6 +164,7 @@ export default function App() {
       onClearResult={handleClearResult}
       onClearHistory={clearHistory}
       onHistoryClick={handleHistoryClick}
+      onLogoClick={handleClearResult}
     />
   );
 }

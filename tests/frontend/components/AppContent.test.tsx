@@ -31,6 +31,7 @@ const defaultProps = {
   onClearResult: vi.fn(),
   onClearHistory: vi.fn(),
   onHistoryClick: vi.fn(),
+  onLogoClick: vi.fn(),
 }
 
 describe('AppContent', () => {
@@ -184,5 +185,15 @@ describe('AppContent', () => {
 
     await user.click(screen.getByText('清空记录'))
     expect(onClearHistory).toHaveBeenCalled()
+  })
+
+  it('calls onLogoClick when the logo is clicked', async () => {
+    const onLogoClick = vi.fn()
+    const user = userEvent.setup()
+
+    render(<AppContent {...defaultProps} onLogoClick={onLogoClick} />)
+
+    await user.click(screen.getByRole('button', { name: '回到首页' }))
+    expect(onLogoClick).toHaveBeenCalled()
   })
 })

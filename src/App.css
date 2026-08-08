@@ -21,6 +21,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  margin-inline: auto;
+}
+
+.logo-area:hover .logo-text {
+  opacity: 0.75;
+}
+
+.logo-area:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
 }
 
 .logo-text {

@@ -24,6 +24,7 @@ interface AppContentProps {
   onClearResult: () => void;
   onClearHistory: () => void;
   onHistoryClick: (url: string) => void;
+  onLogoClick: () => void;
 }
 
 function ShareBox({ shareId }: { shareId: string }) {
@@ -90,14 +91,20 @@ function AppContent({
   onClearResult,
   onClearHistory,
   onHistoryClick,
+  onLogoClick,
 }: AppContentProps) {
   return (
     <div className="app-container">
       <PWAUpdatePrompt />
       <header className="app-header">
-        <div className="logo-area">
+        <button
+          type="button"
+          className="logo-area"
+          onClick={onLogoClick}
+          aria-label="回到首页"
+        >
           <span className="logo-text">Ming Media Downloader</span>
-        </div>
+        </button>
         <p className="subtitle">
           无水印下载小红书和 𝕏 视频
         </p>
