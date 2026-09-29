@@ -142,10 +142,10 @@ ming-media-downloader/
 ├── tsconfig.json                 # 解决方案式项目引用
 ├── tsconfig.test.json            # 测试类型检查
 ├── scripts/                      # 构建辅助（PWA 图标生成）
-└── package.json                  # 两端共用脚本入口（pnpm dev/deploy/test）
+└── package.json                  # 两端共用脚本入口（pnpm dev/release/test）
 ```
 
-单一部署：`pnpm deploy`（或 `cd worker && cf deploy`）把构建好的前端（`dist/`）和 API 作为同一个 Worker 一起发布。
+单一部署：`pnpm release`（或 `cd backend && cf deploy`）把构建好的前端（`dist/`）和 API 作为同一个 Worker 一起发布。
 
 需要配置以下 Cloudflare 资源：
 

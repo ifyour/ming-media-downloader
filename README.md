@@ -143,10 +143,10 @@ ming-media-downloader/
 ├── tsconfig.json                 # Solution-style references
 ├── tsconfig.test.json            # Test typecheck
 ├── scripts/                      # Build helpers (PWA icon generation)
-└── package.json                  # Script entry for both ends (pnpm dev/deploy/test)
+└── package.json                  # Script entry for both ends (pnpm dev/release/test)
 ```
 
-Single deployment: `pnpm deploy` (or `cd worker && cf deploy`) ships the built frontend (`dist/`) and the API as one Worker.
+Single deployment: `pnpm release` (or `cd backend && cf deploy`) ships the built frontend (`dist/`) and the API as one Worker.
 
 Requires the following Cloudflare resources:
 

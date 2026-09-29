@@ -10,7 +10,7 @@
 
 ```sh
 pnpm dev              # concurrently starts Vite (:5173) + cf dev (:8787)
-pnpm deploy           # build frontend, then single deploy (assets + API in one Worker)
+pnpm release          # build frontend, then single deploy (assets + API in one Worker)
 pnpm build            # tsc -b (typecheck both tsconfigs) then vite build
 ```
 
