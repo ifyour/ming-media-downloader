@@ -2,33 +2,28 @@
 
 ## Architecture
 
-- **Frontend** (`src/`): React 19 + TypeScript 6.0 + Vite 8. LightningCSS for CSS (not PostCSS/Sass).
-- **Backend** (`worker/`): Cloudflare Worker, source at `worker/src/index.ts`.
-- **Pages Function** (`functions/api/[[path]].ts`): proxies `/api/*` to the deployed Worker at a hardcoded origin. In dev, Vite's `server.proxy` handles this instead.
-- **Entrypoints**: `src/main.tsx` (frontend), `worker/src/index.ts` (backend).
+- **Frontend** (`frontend/`): React 19 + TypeScript 6.0 + Vite 8. LightningCSS for CSS (not PostCSS/Sass). Source in `frontend/src/`, build output at repo-root `dist/`.
+- **Backend** (`backend/`): Cloudflare Worker serving both the API and the frontend static assets (`dist/`) as a single deployment. In dev, Vite's `server.proxy` handles `/api/*` instead.
+- **Entrypoints**: `frontend/src/main.tsx` (frontend), `backend/src/index.ts` (backend).
 
 ## Commands
 
 ```sh
 pnpm dev              # concurrently starts Vite (:5173) + cf dev (:8787)
+pnpm deploy           # build frontend, then single deploy (assets + API in one Worker)
 pnpm build            # tsc -b (typecheck both tsconfigs) then vite build
-pnpm lint             # eslint .
-pnpm preview          # vite preview
-pnpm deploy           # backend then frontend
-pnpm deploy:backend   # cf deploy (from worker/, uses worker/cloudflare.config.ts)
-pnpm deploy:frontend  # build → wrangler pages deploy dist --project-name ming-media-downloader
 ```
 
 ## Quirks & gotchas
 
 - `pnpm build` runs `tsc -b` before `vite build`. TypeScript errors block the build.
-- `tsc -b` uses project references (`tsconfig.json` → `tsconfig.app.json` + `tsconfig.node.json`). Both must compile.
+- `tsc -b` uses project references (`tsconfig.json` → `frontend/tsconfig.app.json` + `frontend/tsconfig.node.json`). Both must compile.
 - `verbatimModuleSyntax` is on: type imports require `import type { ... }`.
 - `erasableSyntaxOnly` is on: no enums, no namespaces, no parameter properties.
 - TypeScript 6.0 — verify compatibility before upgrading any TS-adjacent dependency.
 - LightningCSS CSS transformer targets Safari 11+ (iOS 12+). Not PostCSS — don't add PostCSS plugins/ config.
-- The Worker requires KV namespace `MMD_CACHE` (hardcoded ID in `worker/cloudflare.config.ts`; `worker/wrangler.toml` kept in sync for vitest-pool-workers). Without it, cache and share features fail.
-- The Pages Function hardcodes the Worker URL — update if deploying to a different account/domain.
+- The Worker requires KV namespace `MMD_CACHE` (hardcoded ID in `backend/cloudflare.config.ts`; `backend/wrangler.toml` kept in sync for vitest-pool-workers). Without it, cache and share features fail.
+- Single Worker deployment: frontend assets + API. Deploy from `backend/` with `cf deploy`.
 - PWA is enabled in dev mode (`devOptions.enabled: true`), so `dev-dist/` is generated.
 - `pnpm-workspace.yaml` declares `allowBuilds` for esbuild, sharp, workerd — needed for `pnpm install` and wrangler.
 - PWA icons generated from `public/favicon.svg` via `scripts/generate-pwa-icons.js`.
@@ -47,8 +42,8 @@ Two separate Vitest configs (Vitest 4 removed `defineWorkspace`):
 
 | Config | Runtime | Scope |
 |--------|---------|-------|
-| `vitest.worker.config.ts` | workerd (via `@cloudflare/vitest-pool-workers`) | `tests/worker/**/*.test.ts` |
-| `vitest.frontend.config.ts` | jsdom | `tests/frontend/**/*.test.ts` + `test.tsx` |
+| `vitest.worker.config.ts` | workerd (via `@cloudflare/vitest-pool-workers`) | `backend/tests/**/*.test.ts` |
+| `vitest.frontend.config.ts` | jsdom | `frontend/tests/**/*.test.ts` + `test.tsx` |
 
 ### File naming conventions
 

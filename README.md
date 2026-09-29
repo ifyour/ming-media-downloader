@@ -29,7 +29,7 @@ Download watermark-free videos and images from Xiaohongshu (RED) and X / Twitter
 | **Styling** | Geist design system + CSS Variables | Light/dark themes, responsive layout |
 | **Backend** | Cloudflare Workers | Serverless edge computing |
 | **Storage** | Cloudflare KV | Caching and share-code storage |
-| **Deployment** | Cloudflare Pages + Workers | Global CDN acceleration |
+| **Deployment** | Cloudflare Workers (single deployment) | Frontend assets + API in one Worker, global edge |
 
 ## Getting Started
 
@@ -99,27 +99,31 @@ Worker tests run in the Miniflare (workerd) runtime with real Cloudflare Workers
 
 ## Project Structure
 
-Quick map: **`src/` = frontend · `worker/` + `functions/` = backend · `tests/` mirrors both · the rest is build artifacts and configs.**
+Quick map: **`frontend/` = frontend · `backend/` = backend (serves both the API and the built frontend) · tests live inside each side · root holds shared configs.**
 
 ```
 ming-media-downloader/
 │  ── FRONTEND ──
-├── src/                          # Frontend source (React SPA)
-│   ├── main.tsx                  # React entry point
-│   ├── App.tsx                   # Root component (state + logic)
-│   ├── AppContent.tsx            # Presentational component (layout)
-│   ├── types.ts                  # Type definitions
-│   ├── extractUrl.ts             # URL extraction logic
-│   ├── history.ts                # Download history (localStorage)
-│   ├── hooks.ts                  # Custom hooks
-│   ├── utils.ts                  # Utility functions
-│   ├── components/               # UI components
-│   └── index.css                 # Global styles + Geist design tokens
+├── frontend/
+│   ├── src/                      # Frontend source (React SPA)
+│   │   ├── main.tsx              # React entry point
+│   │   ├── App.tsx               # Root component (state + logic)
+│   │   ├── types.ts              # Type definitions
+│   │   ├── extractUrl.ts         # URL extraction logic
+│   │   ├── history.ts            # Download history (localStorage)
+│   │   ├── hooks.ts              # Custom hooks
+│   │   ├── components/           # UI components
+│   │   └── index.css             # Global styles + Geist design tokens
+│   ├── public/                   # Static assets (icons, etc.)
+│   ├── tests/                    # jsdom tests (mirror src/)
+│   ├── index.html                # SPA entry
+│   ├── vite.config.ts            # Build config (dev proxy /api → :8787; outDir ../dist)
+│   └── tsconfig.*.json           # Frontend typecheck
 │
 │  ── BACKEND ──
-├── worker/                       # Cloudflare Worker (pure API)
+├── backend/
 │   ├── src/
-│   │   ├── index.ts              # Entry point + routing (/api/parse, /api/download...)
+│   │   ├── index.ts              # Entry point + routing (/api/*; other paths → SPA assets)
 │   │   ├── parse.ts              # Parse orchestration
 │   │   ├── rednote.ts            # Xiaohongshu parser
 │   │   ├── twitter.ts            # X/Twitter parser
@@ -127,53 +131,27 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV cache
 │   │   ├── types.ts              # Backend type definitions
 │   │   └── utils.ts              # CORS / JSON helpers
-│   ├── cloudflare.config.ts      # cf deploy/dev config (KV binding MMD_CACHE)
+│   ├── tests/                    # workerd tests (mirror src/)
+│   ├── cloudflare.config.ts      # cf deploy/dev config (KV MMD_CACHE + ASSETS binding)
 │   └── wrangler.toml             # Kept in sync for vitest-pool-workers
 │
-├── functions/api/[[path]].ts     # Pages Function: production reverse proxy /api/* → Worker
-│
 │  ── SHARED ──
-├── tests/
-│   ├── frontend/                 # jsdom tests (mirrors src/)
-│   └── worker/                   # workerd tests (mirrors worker/src/)
-├── public/                       # Static assets (icons, etc.)
-├── scripts/                      # Build helpers (PWA icon generation)
-├── vite.config.ts                # Frontend build (dev proxy /api → :8787)
+├── dist/                         # Frontend build output (deployed as Worker assets)
+├── vite.config.ts → frontend/    # (see frontend above)
 ├── vitest.frontend.config.ts     # Frontend test config
 ├── vitest.worker.config.ts       # Worker test config
-├── tsconfig.app.json             # Frontend typecheck
-├── worker/tsconfig.json          # Backend typecheck
+├── tsconfig.json                 # Solution-style references
+├── tsconfig.test.json            # Test typecheck
+├── scripts/                      # Build helpers (PWA icon generation)
 └── package.json                  # Script entry for both ends (pnpm dev/deploy/test)
 ```
 
-The two deployables are independent: `pnpm deploy:backend` (Worker, from `worker/`) and `pnpm deploy:frontend` (Pages, static `dist/`). Note: `cf` does not support legacy Pages deploy — the frontend still uses `wrangler pages deploy`.
-
-## Deployment
-
-### Backend Worker
-
-```bash
-pnpm deploy:backend
-```
+Single deployment: `pnpm deploy` (or `cd worker && cf deploy`) ships the built frontend (`dist/`) and the API as one Worker.
 
 Requires the following Cloudflare resources:
 
 - **KV Namespace** `MMD_CACHE` — Caches parse results and share codes (expires after 7 days by default)
 - **Browser Rendering** (optional) — Puppeteer rendering for Xiaohongshu SSR fallback
-
-### Frontend Pages
-
-```bash
-pnpm deploy:frontend
-```
-
-Builds the frontend and deploys it to Cloudflare Pages. `functions/api/[[path]].ts` proxies API requests to the Worker.
-
-### One-Click Deploy
-
-```bash
-pnpm deploy
-```
 
 ## Deployment Configuration
 
@@ -191,10 +169,7 @@ User browser (React SPA + PWA)
     │
     │ /api/parse, /api/download, /api/image-proxy, /api/share
     ▼
-Cloudflare Pages (functions/api/[[path]].ts)
-    │  (proxies to the Worker)
-    ▼
-Cloudflare Worker
+Cloudflare Worker (static assets + API)
     │
     ├── parse.ts → rednote.ts (SSR HTML parsing)
     │             → twitter.ts (fxtwitter API)

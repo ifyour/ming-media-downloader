@@ -3,8 +3,8 @@ import fs from 'fs'
 import path from 'path'
 
 const sizes = [192, 512]
-const input = path.resolve('public/favicon.svg')
-const outDir = path.resolve('public')
+const input = path.resolve('frontend/public/favicon.svg')
+const outDir = path.resolve('frontend/public')
 
 async function generate() {
   for (const size of sizes) {
