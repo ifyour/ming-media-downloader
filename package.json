@@ -16,7 +16,6 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "deploy": "pnpm build && cd worker && cf deploy",
-    "deploy:backend": "cd worker && cf deploy",
     "test": "vitest run --config vitest.worker.config.ts --passWithNoTests --exclude '**/*.fallback.test.ts' && vitest run --config vitest.frontend.config.ts --passWithNoTests",
     "test:full": "vitest run --config vitest.worker.config.ts --passWithNoTests && vitest run --config vitest.frontend.config.ts --passWithNoTests",
     "test:fallback": "vitest run --config vitest.worker.config.ts tests/worker/*.fallback.test.ts",
