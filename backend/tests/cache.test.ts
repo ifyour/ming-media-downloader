@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { getCacheKey, getCacheResult, setCacheResult } from '../../worker/src/cache'
-import type { MediaResult } from '../../worker/src/types'
+import { getCacheKey, getCacheResult, setCacheResult } from '../src/cache'
+import type { MediaResult } from '../src/types'
 
 describe('getCacheKey', () => {
   it('returns xhs key for xiaohongshu.com explore URL', () => {

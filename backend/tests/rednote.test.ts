@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { parseRednote } from '../../worker/src/rednote'
-import type { Env } from '../../worker/src/types'
+import { parseRednote } from '../src/rednote'
+import type { Env } from '../src/types'
 
 describe('parseRednote', () => {
   const originalFetch = globalThis.fetch

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getErrorMessage, proxiedImage, formatBytes } from '../../src/utils'
+import { getErrorMessage, proxiedImage, formatBytes } from '../src/utils'
 
 describe('getErrorMessage', () => {
   it('returns message from Error instance', () => {

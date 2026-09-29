@@ -99,25 +99,29 @@ Worker tests run in the Miniflare (workerd) runtime with real Cloudflare Workers
 
 ## Project Structure
 
-Quick map: **`src/` = frontend · `worker/` = backend (serves both the API and the built frontend) · `tests/` mirrors both · the rest is build artifacts and configs.**
+Quick map: **`frontend/` = frontend · `backend/` = backend (serves both the API and the built frontend) · tests live inside each side · root holds shared configs.**
 
 ```
 ming-media-downloader/
 │  ── FRONTEND ──
-├── src/                          # Frontend source (React SPA)
-│   ├── main.tsx                  # React entry point
-│   ├── App.tsx                   # Root component (state + logic)
-│   ├── AppContent.tsx            # Presentational component (layout)
-│   ├── types.ts                  # Type definitions
-│   ├── extractUrl.ts             # URL extraction logic
-│   ├── history.ts                # Download history (localStorage)
-│   ├── hooks.ts                  # Custom hooks
-│   ├── utils.ts                  # Utility functions
-│   ├── components/               # UI components
-│   └── index.css                 # Global styles + Geist design tokens
+├── frontend/
+│   ├── src/                      # Frontend source (React SPA)
+│   │   ├── main.tsx              # React entry point
+│   │   ├── App.tsx               # Root component (state + logic)
+│   │   ├── types.ts              # Type definitions
+│   │   ├── extractUrl.ts         # URL extraction logic
+│   │   ├── history.ts            # Download history (localStorage)
+│   │   ├── hooks.ts              # Custom hooks
+│   │   ├── components/           # UI components
+│   │   └── index.css             # Global styles + Geist design tokens
+│   ├── public/                   # Static assets (icons, etc.)
+│   ├── tests/                    # jsdom tests (mirror src/)
+│   ├── index.html                # SPA entry
+│   ├── vite.config.ts            # Build config (dev proxy /api → :8787; outDir ../dist)
+│   └── tsconfig.*.json           # Frontend typecheck
 │
 │  ── BACKEND ──
-├── worker/                       # Cloudflare Worker (API + static asset hosting)
+├── backend/
 │   ├── src/
 │   │   ├── index.ts              # Entry point + routing (/api/*; other paths → SPA assets)
 │   │   ├── parse.ts              # Parse orchestration
@@ -127,20 +131,18 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV cache
 │   │   ├── types.ts              # Backend type definitions
 │   │   └── utils.ts              # CORS / JSON helpers
+│   ├── tests/                    # workerd tests (mirror src/)
 │   ├── cloudflare.config.ts      # cf deploy/dev config (KV MMD_CACHE + ASSETS binding)
 │   └── wrangler.toml             # Kept in sync for vitest-pool-workers
 │
 │  ── SHARED ──
-├── tests/
-│   ├── frontend/                 # jsdom tests (mirrors src/)
-│   └── worker/                   # workerd tests (mirrors worker/src/)
-├── public/                       # Static assets (icons, etc.)
-├── scripts/                      # Build helpers (PWA icon generation)
-├── vite.config.ts                # Frontend build (dev proxy /api → :8787)
+├── dist/                         # Frontend build output (deployed as Worker assets)
+├── vite.config.ts → frontend/    # (see frontend above)
 ├── vitest.frontend.config.ts     # Frontend test config
 ├── vitest.worker.config.ts       # Worker test config
-├── tsconfig.app.json             # Frontend typecheck
-├── worker/tsconfig.json          # Backend typecheck
+├── tsconfig.json                 # Solution-style references
+├── tsconfig.test.json            # Test typecheck
+├── scripts/                      # Build helpers (PWA icon generation)
 └── package.json                  # Script entry for both ends (pnpm dev/deploy/test)
 ```
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { parseWithCache } from '../../worker/src/parse'
-import * as cacheModule from '../../worker/src/cache'
-import type { Env, MediaResult } from '../../worker/src/types'
+import { parseWithCache } from '../src/parse'
+import * as cacheModule from '../src/cache'
+import type { Env, MediaResult } from '../src/types'
 
 describe('parseWithCache — degradation paths', () => {
   const originalFetch = globalThis.fetch

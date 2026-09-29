@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractUrl } from '../../src/extractUrl'
+import { extractUrl } from '../src/extractUrl'
 
 describe('extractUrl', () => {
   it('extracts https URL from text', () => {

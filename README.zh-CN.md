@@ -99,25 +99,29 @@ Worker 测试在 Miniflare（workerd）运行时中执行，支持 `HTMLRewriter
 
 ## 项目结构
 
-快速地图：**`src/` = 前端 · `worker/` = 后端（同时托管 API 和构建后的前端）· `tests/` 跟着被测对象分 · 其余是构建产物和配置。**
+快速地图：**`frontend/` = 前端 · `backend/` = 后端（同时托管 API 和构建后的前端）· 测试各自跟随所在侧 · 根目录放共用配置。**
 
 ```
 ming-media-downloader/
 │  ── 前端 ──
-├── src/                          # 前端源码（React SPA）
-│   ├── main.tsx                  # React 入口
-│   ├── App.tsx                   # 根组件（状态 + 逻辑）
-│   ├── AppContent.tsx            # 展示组件（布局）
-│   ├── types.ts                  # 类型定义
-│   ├── extractUrl.ts             # URL 提取逻辑
-│   ├── history.ts                # 下载历史（localStorage）
-│   ├── hooks.ts                  # 自定义 Hooks
-│   ├── utils.ts                  # 工具函数
-│   ├── components/               # UI 组件
-│   └── index.css                 # 全局样式 + Geist 设计 Token
+├── frontend/
+│   ├── src/                      # 前端源码（React SPA）
+│   │   ├── main.tsx              # React 入口
+│   │   ├── App.tsx               # 根组件（状态 + 逻辑）
+│   │   ├── types.ts              # 类型定义
+│   │   ├── extractUrl.ts         # URL 提取逻辑
+│   │   ├── history.ts            # 下载历史（localStorage）
+│   │   ├── hooks.ts              # 自定义 Hooks
+│   │   ├── components/           # UI 组件
+│   │   └── index.css             # 全局样式 + Geist 设计 Token
+│   ├── public/                   # 静态资源（图标等）
+│   ├── tests/                    # jsdom 测试（对应 src/）
+│   ├── index.html                # SPA 入口
+│   ├── vite.config.ts            # 构建配置（开发时 /api 代理到 :8787；输出 ../dist）
+│   └── tsconfig.*.json           # 前端类型检查
 │
 │  ── 后端 ──
-├── worker/                       # Cloudflare Worker（API + 静态资产托管）
+├── backend/
 │   ├── src/
 │   │   ├── index.ts              # 入口 + 路由分发（/api/*；其它路径 → SPA 静态资产）
 │   │   ├── parse.ts              # 解析编排
@@ -127,20 +131,17 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV 缓存
 │   │   ├── types.ts              # 后端类型定义
 │   │   └── utils.ts              # CORS / JSON 工具
+│   ├── tests/                    # workerd 测试（对应 src/）
 │   ├── cloudflare.config.ts      # cf 部署/开发配置（KV MMD_CACHE + ASSETS 绑定）
 │   └── wrangler.toml             # 为 vitest-pool-workers 保留，需同步维护
 │
 │  ── 共用 ──
-├── tests/
-│   ├── frontend/                 # jsdom 测试（对应 src/）
-│   └── worker/                   # workerd 测试（对应 worker/src/）
-├── public/                       # 静态资源（图标等）
-├── scripts/                      # 构建辅助（PWA 图标生成）
-├── vite.config.ts                # 前端构建（开发时 /api 代理到 :8787）
+├── dist/                         # 前端构建产物（作为 Worker 静态资产部署）
 ├── vitest.frontend.config.ts     # 前端测试配置
 ├── vitest.worker.config.ts       # Worker 测试配置
-├── tsconfig.app.json             # 前端类型检查
-├── worker/tsconfig.json          # 后端类型检查
+├── tsconfig.json                 # 解决方案式项目引用
+├── tsconfig.test.json            # 测试类型检查
+├── scripts/                      # 构建辅助（PWA 图标生成）
 └── package.json                  # 两端共用脚本入口（pnpm dev/deploy/test）
 ```
 

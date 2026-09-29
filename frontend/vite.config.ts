@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  root: import.meta.dirname,
   css: {
     transformer: 'lightningcss',
     lightningcss: {
@@ -13,6 +14,8 @@ export default defineConfig({
   },
   build: {
     cssTarget: 'safari11',
+    outDir: '../dist',
+    emptyOutDir: true,
   },
   plugins: [
     react(),

@@ -9,7 +9,7 @@ import {
   resolveUrl,
   extractTwitterDimensions,
   extractTwitterQuality,
-} from '../../worker/src/utils'
+} from '../src/utils'
 
 describe('isRecord', () => {
   it('returns true for plain objects', () => {

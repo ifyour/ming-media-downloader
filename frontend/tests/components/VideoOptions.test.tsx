@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { VideoOptions } from '../../../src/components/VideoOptions'
-import type { VideoFormat } from '../../../src/types'
+import { VideoOptions } from '../../src/components/VideoOptions'
+import type { VideoFormat } from '../../src/types'
 
 describe('VideoOptions', () => {
   const mockVideos: VideoFormat[] = [

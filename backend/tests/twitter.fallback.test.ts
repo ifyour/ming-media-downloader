@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { parseTwitter } from '../../worker/src/twitter'
+import { parseTwitter } from '../src/twitter'
 
 describe('parseTwitter — fallback chain (Tier 3)', () => {
   const originalFetch = globalThis.fetch

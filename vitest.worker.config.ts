@@ -4,11 +4,11 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      wrangler: { configPath: './worker/wrangler.toml' },
+      wrangler: { configPath: './backend/wrangler.toml' },
     }),
   ],
   test: {
-    include: ['tests/worker/**/*.test.ts'],
+    include: ['backend/tests/**/*.test.ts'],
     passWithNoTests: true,
   },
 })

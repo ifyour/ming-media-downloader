@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { addToHistory, clearHistory } from '../../src/history'
-import type { HistoryItem } from '../../src/types'
+import { addToHistory, clearHistory } from '../src/history'
+import type { HistoryItem } from '../src/types'
 
 describe('history', () => {
   beforeEach(() => {

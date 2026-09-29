@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { handleImageProxy, handleProxyDownload } from '../../worker/src/handlers'
+import { handleImageProxy, handleProxyDownload } from '../src/handlers'
 
 describe('handleImageProxy', () => {
   const originalFetch = globalThis.fetch

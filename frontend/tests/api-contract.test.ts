@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { MediaResult as FrontendResult } from '../../src/types'
+import type { MediaResult as FrontendResult } from '../src/types'
 
 /**
  * API Contract Test: validates that the Worker's response shape matches

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import AppContent from '../../../src/AppContent'
-import type { MediaResult, HistoryItem } from '../../../src/types'
+import AppContent from '../../src/AppContent'
+import type { MediaResult, HistoryItem } from '../../src/types'
 
-vi.mock('../../../src/components/PWAProvider', () => ({
+vi.mock('../../src/components/PWAProvider', () => ({
   usePWA: vi.fn(() => ({
     needRefresh: false,
     offlineReady: false,

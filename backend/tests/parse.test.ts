@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { parseWithCache } from '../../worker/src/parse'
-import type { Env } from '../../worker/src/types'
+import { parseWithCache } from '../src/parse'
+import type { Env } from '../src/types'
 
 describe('parseWithCache', () => {
   const originalFetch = globalThis.fetch

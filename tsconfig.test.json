@@ -15,10 +15,10 @@
     "erasableSyntaxOnly": true
   },
   "include": [
-    "worker/**/*.test.ts",
-    "frontend/**/*.test.ts",
-    "frontend/**/*.test.tsx",
-    "frontend/setup.ts",
-    "frontend/*.d.ts"
+    "backend/src/**/*.ts",
+    "backend/tests/**/*.test.ts",
+    "frontend/tests/**/*.test.ts",
+    "frontend/tests/**/*.test.tsx",
+    "frontend/tests/setup.ts"
   ]
 }

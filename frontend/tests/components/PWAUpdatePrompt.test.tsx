@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { PWAUpdatePrompt } from '../../../src/components/PWAUpdatePrompt'
+import { PWAUpdatePrompt } from '../../src/components/PWAUpdatePrompt'
 
-vi.mock('../../../src/components/PWAProvider', () => ({
+vi.mock('../../src/components/PWAProvider', () => ({
   usePWA: vi.fn(),
 }))
 
-import { usePWA } from '../../../src/components/PWAProvider'
+import { usePWA } from '../../src/components/PWAProvider'
 
 describe('PWAUpdatePrompt', () => {
   it('renders nothing when no update is needed', () => {

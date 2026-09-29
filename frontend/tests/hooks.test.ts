@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useParseState, useLoadingState, useHistoryState } from '../../src/hooks'
-import type { MediaResult, HistoryItem } from '../../src/types'
+import { useParseState, useLoadingState, useHistoryState } from '../src/hooks'
+import type { MediaResult, HistoryItem } from '../src/types'
 
 describe('useParseState', () => {
   it('initializes with empty state', () => {
