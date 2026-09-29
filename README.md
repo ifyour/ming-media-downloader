@@ -29,7 +29,7 @@ Download watermark-free videos and images from Xiaohongshu (RED) and X / Twitter
 | **Styling** | Geist design system + CSS Variables | Light/dark themes, responsive layout |
 | **Backend** | Cloudflare Workers | Serverless edge computing |
 | **Storage** | Cloudflare KV | Caching and share-code storage |
-| **Deployment** | Cloudflare Pages + Workers | Global CDN acceleration |
+| **Deployment** | Cloudflare Workers (single deployment) | Frontend assets + API in one Worker, global edge |
 
 ## Getting Started
 
@@ -99,7 +99,7 @@ Worker tests run in the Miniflare (workerd) runtime with real Cloudflare Workers
 
 ## Project Structure
 
-Quick map: **`src/` = frontend · `worker/` + `functions/` = backend · `tests/` mirrors both · the rest is build artifacts and configs.**
+Quick map: **`src/` = frontend · `worker/` = backend (serves both the API and the built frontend) · `tests/` mirrors both · the rest is build artifacts and configs.**
 
 ```
 ming-media-downloader/
@@ -117,9 +117,9 @@ ming-media-downloader/
 │   └── index.css                 # Global styles + Geist design tokens
 │
 │  ── BACKEND ──
-├── worker/                       # Cloudflare Worker (pure API)
+├── worker/                       # Cloudflare Worker (API + static asset hosting)
 │   ├── src/
-│   │   ├── index.ts              # Entry point + routing (/api/parse, /api/download...)
+│   │   ├── index.ts              # Entry point + routing (/api/*; other paths → SPA assets)
 │   │   ├── parse.ts              # Parse orchestration
 │   │   ├── rednote.ts            # Xiaohongshu parser
 │   │   ├── twitter.ts            # X/Twitter parser
@@ -127,10 +127,8 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV cache
 │   │   ├── types.ts              # Backend type definitions
 │   │   └── utils.ts              # CORS / JSON helpers
-│   ├── cloudflare.config.ts      # cf deploy/dev config (KV binding MMD_CACHE)
+│   ├── cloudflare.config.ts      # cf deploy/dev config (KV MMD_CACHE + ASSETS binding)
 │   └── wrangler.toml             # Kept in sync for vitest-pool-workers
-│
-├── functions/api/[[path]].ts     # Pages Function: production reverse proxy /api/* → Worker
 │
 │  ── SHARED ──
 ├── tests/
@@ -146,34 +144,12 @@ ming-media-downloader/
 └── package.json                  # Script entry for both ends (pnpm dev/deploy/test)
 ```
 
-The two deployables are independent: `pnpm deploy:backend` (Worker, from `worker/`) and `pnpm deploy:frontend` (Pages, static `dist/`). Note: `cf` does not support legacy Pages deploy — the frontend still uses `wrangler pages deploy`.
-
-## Deployment
-
-### Backend Worker
-
-```bash
-pnpm deploy:backend
-```
+Single deployment: `pnpm deploy` (or `cd worker && cf deploy`) ships the built frontend (`dist/`) and the API as one Worker.
 
 Requires the following Cloudflare resources:
 
 - **KV Namespace** `MMD_CACHE` — Caches parse results and share codes (expires after 7 days by default)
 - **Browser Rendering** (optional) — Puppeteer rendering for Xiaohongshu SSR fallback
-
-### Frontend Pages
-
-```bash
-pnpm deploy:frontend
-```
-
-Builds the frontend and deploys it to Cloudflare Pages. `functions/api/[[path]].ts` proxies API requests to the Worker.
-
-### One-Click Deploy
-
-```bash
-pnpm deploy
-```
 
 ## Deployment Configuration
 
@@ -191,10 +167,7 @@ User browser (React SPA + PWA)
     │
     │ /api/parse, /api/download, /api/image-proxy, /api/share
     ▼
-Cloudflare Pages (functions/api/[[path]].ts)
-    │  (proxies to the Worker)
-    ▼
-Cloudflare Worker
+Cloudflare Worker (static assets + API)
     │
     ├── parse.ts → rednote.ts (SSR HTML parsing)
     │             → twitter.ts (fxtwitter API)

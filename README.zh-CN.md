@@ -29,7 +29,7 @@
 | **样式** | Geist 设计系统 + CSS Variables | 明暗主题，响应式布局 |
 | **后端** | Cloudflare Workers | 无服务器边缘计算 |
 | **存储** | Cloudflare KV | 缓存与分享码存储 |
-| **部署** | Cloudflare Pages + Workers | 全球 CDN 加速 |
+| **部署** | Cloudflare Workers（单部署） | 前端资产 + API 同一 Worker，全球边缘节点 |
 
 ## 快速开始
 
@@ -99,7 +99,7 @@ Worker 测试在 Miniflare（workerd）运行时中执行，支持 `HTMLRewriter
 
 ## 项目结构
 
-快速地图：**`src/` = 前端 · `worker/` + `functions/` = 后端 · `tests/` 跟着被测对象分 · 其余是构建产物和配置。**
+快速地图：**`src/` = 前端 · `worker/` = 后端（同时托管 API 和构建后的前端）· `tests/` 跟着被测对象分 · 其余是构建产物和配置。**
 
 ```
 ming-media-downloader/
@@ -117,9 +117,9 @@ ming-media-downloader/
 │   └── index.css                 # 全局样式 + Geist 设计 Token
 │
 │  ── 后端 ──
-├── worker/                       # Cloudflare Worker（纯 API）
+├── worker/                       # Cloudflare Worker（API + 静态资产托管）
 │   ├── src/
-│   │   ├── index.ts              # 入口 + 路由分发（/api/parse、/api/download…）
+│   │   ├── index.ts              # 入口 + 路由分发（/api/*；其它路径 → SPA 静态资产）
 │   │   ├── parse.ts              # 解析编排
 │   │   ├── rednote.ts            # 小红书解析器
 │   │   ├── twitter.ts            # X/Twitter 解析器
@@ -127,10 +127,8 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV 缓存
 │   │   ├── types.ts              # 后端类型定义
 │   │   └── utils.ts              # CORS / JSON 工具
-│   ├── cloudflare.config.ts      # cf 部署/开发配置（KV 绑定 MMD_CACHE）
+│   ├── cloudflare.config.ts      # cf 部署/开发配置（KV MMD_CACHE + ASSETS 绑定）
 │   └── wrangler.toml             # 为 vitest-pool-workers 保留，需同步维护
-│
-├── functions/api/[[path]].ts     # Pages Function：生产环境把 /api/* 反代到 Worker
 │
 │  ── 共用 ──
 ├── tests/
@@ -146,34 +144,12 @@ ming-media-downloader/
 └── package.json                  # 两端共用脚本入口（pnpm dev/deploy/test）
 ```
 
-两个部署目标是独立的：`pnpm deploy:backend`（Worker，在 `worker/` 内执行）和 `pnpm deploy:frontend`（Pages，静态 `dist/`）。注意：`cf` 不支持 legacy Pages 部署，前端仍使用 `wrangler pages deploy`。
-
-## 部署
-
-### 后端 Worker
-
-```bash
-pnpm deploy:backend
-```
+单一部署：`pnpm deploy`（或 `cd worker && cf deploy`）把构建好的前端（`dist/`）和 API 作为同一个 Worker 一起发布。
 
 需要配置以下 Cloudflare 资源：
 
 - **KV Namespace** `MMD_CACHE` — 缓存解析结果与分享码（默认 7 天过期）
 - **Browser Rendering**（可选）— 小红书 SSR 降级时的 Puppeteer 渲染
-
-### 前端 Pages
-
-```bash
-pnpm deploy:frontend
-```
-
-构建前端后部署到 Cloudflare Pages。`functions/api/[[path]].ts` 会将 API 请求代理到 Worker。
-
-### 一键部署
-
-```bash
-pnpm deploy
-```
 
 ## 部署配置
 
@@ -191,10 +167,7 @@ pnpm deploy
     │
     │ /api/parse, /api/download, /api/image-proxy, /api/share
     ▼
-Cloudflare Pages (functions/api/[[path]].ts)
-    │  (代理到 Worker)
-    ▼
-Cloudflare Worker
+Cloudflare Worker（静态资产 + API）
     │
     ├── parse.ts → rednote.ts（SSR HTML 解析）
     │             → twitter.ts（fxtwitter API）
