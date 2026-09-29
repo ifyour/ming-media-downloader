@@ -1,10 +1,10 @@
 # MMD — Ming Media Downloader
 
+<p align="center"><sub><a href="README.md">English</a> · 简体中文</sub></p>
+
 无水印下载小红书（RED）和 X / Twitter 视频与图片。
 
-> 粘贴小红书或 X 的分享链接/文本，自动提取原图、原视频（无水印），支持多清晰度选择、下载历史记录和分享解析结果。</p>
-
-<p align="center"><sub><a href="README.md">English</a> · 简体中文</sub></p>
+> 粘贴小红书或 X 的分享链接/文本，自动提取原图、原视频（无水印），支持多清晰度选择、下载历史记录和分享解析结果。
 
 ## 功能特性
 
@@ -33,94 +33,33 @@
 
 ## 快速开始
 
-### 前置要求
-
-- [Node.js](https://nodejs.org/) >= 20
-- [pnpm](https://pnpm.io/) >= 9
-- [Cloudflare 账号](https://dash.cloudflare.com/)（部署时需要）
-
-### 安装
+需要 Node.js ≥ 20 和 pnpm ≥ 9。
 
 ```bash
 pnpm install
+pnpm dev        # 前端 :5173 + 后端 :8787，/api/* 自动代理
+pnpm build      # 类型检查 + 生产构建到 dist/
+pnpm test       # 全部主测试（pre-commit 自动执行）
+pnpm release    # 构建 + 部署（资产 + API 单一 Worker）
 ```
 
-### 本地开发
+其他测试命令：`test:full`（含降级测试）、`test:worker`、`test:frontend`、`test:fallback`、`test:watch`。
 
-同时启动前端（`localhost:5173`）和后端（`localhost:8787`）：
-
-```bash
-pnpm dev
-```
-
-前端 Vite 开发服务器会自动将 `/api/*` 请求代理到后端 Worker。
-
-### 构建
-
-```bash
-pnpm build
-```
-
-TypeScript 类型检查后，Vite 构建生产版本到 `dist/` 目录。
-
-### 预览生产构建
-
-```bash
-pnpm preview
-```
-
-### 代码检查
-
-```bash
-pnpm lint
-```
-
-### 测试
-
-项目使用 [Vitest](https://vitest.dev/) 4 进行测试，覆盖 Worker 后端和 React 前端。
-
-| 命令 | 说明 |
-|------|------|
-| `pnpm test` | 运行所有主测试（排除降级测试） |
-| `pnpm test:full` | 运行全部测试（含降级测试） |
-| `pnpm test:worker` | 仅运行 Worker 后端测试 |
-| `pnpm test:frontend` | 仅运行前端测试 |
-| `pnpm test:fallback` | 仅运行降级路径测试 |
-| `pnpm test:watch` | 监听模式（Watcher） |
-
-```bash
-pnpm test        # 每次提交前运行（pre-commit hook 自动执行）
-pnpm test:full   # 大版本发布前运行
-```
-
-> 项目配置了 Git pre-commit hook（`.githooks/pre-commit`），每次 `git commit` 时自动运行 `pnpm test && pnpm build`。如需跳过（如 WIP），使用 `git commit --no-verify`。
+> pre-commit hook（`.githooks/pre-commit`）每次提交自动运行 lint → build → test。跳过用 `git commit --no-verify`。
 
 Worker 测试在 Miniflare（workerd）运行时中执行，支持 `HTMLRewriter`、`KVNamespace` 等真实 Cloudflare Workers API。前端测试使用 jsdom 环境。
 
 ## 项目结构
 
-快速地图：**`frontend/` = 前端 · `backend/` = 后端（同时托管 API 和构建后的前端）· 测试各自跟随所在侧 · 根目录放共用配置。**
-
 ```
 ming-media-downloader/
-│  ── 前端 ──
 ├── frontend/
-│   ├── src/                      # 前端源码（React SPA）
-│   │   ├── main.tsx              # React 入口
-│   │   ├── App.tsx               # 根组件（状态 + 逻辑）
-│   │   ├── types.ts              # 类型定义
-│   │   ├── extractUrl.ts         # URL 提取逻辑
-│   │   ├── history.ts            # 下载历史（localStorage）
-│   │   ├── hooks.ts              # 自定义 Hooks
-│   │   ├── components/           # UI 组件
-│   │   └── index.css             # 全局样式 + Geist 设计 Token
+│   ├── src/                      # React SPA（入口 main.tsx、hooks、components）
 │   ├── public/                   # 静态资源（图标等）
-│   ├── tests/                    # jsdom 测试（对应 src/）
+│   ├── tests/                    # jsdom 测试
 │   ├── index.html                # SPA 入口
 │   ├── vite.config.ts            # 构建配置（开发时 /api 代理到 :8787；输出 ../dist）
 │   └── tsconfig.*.json           # 前端类型检查
-│
-│  ── 后端 ──
 ├── backend/
 │   ├── src/
 │   │   ├── index.ts              # 入口 + 路由分发（/api/*；其它路径 → SPA 静态资产）
@@ -129,23 +68,18 @@ ming-media-downloader/
 │   │   ├── twitter.ts            # X/Twitter 解析器
 │   │   ├── handlers.ts           # 图片/下载代理
 │   │   ├── cache.ts              # KV 缓存
-│   │   ├── types.ts              # 后端类型定义
 │   │   └── utils.ts              # CORS / JSON 工具
-│   ├── tests/                    # workerd 测试（对应 src/）
+│   ├── tests/                    # workerd 测试
 │   ├── cloudflare.config.ts      # cf 部署/开发配置（KV MMD_CACHE + ASSETS 绑定）
 │   └── wrangler.toml             # 为 vitest-pool-workers 保留，需同步维护
-│
-│  ── 共用 ──
 ├── dist/                         # 前端构建产物（作为 Worker 静态资产部署）
-├── vitest.frontend.config.ts     # 前端测试配置
-├── vitest.worker.config.ts       # Worker 测试配置
-├── tsconfig.json                 # 解决方案式项目引用
-├── tsconfig.test.json            # 测试类型检查
-├── scripts/                      # 构建辅助（PWA 图标生成）
-└── package.json                  # 两端共用脚本入口（pnpm dev/release/test）
+├── vitest.*.config.ts            # 测试配置（根目录，按运行时区分）
+├── tsconfig.json / tsconfig.test.json
+├── scripts/                      # PWA 图标生成
+└── package.json                  # pnpm dev / release / test
 ```
 
-单一部署：`pnpm release`（或 `cd backend && cf deploy`）把构建好的前端（`dist/`）和 API 作为同一个 Worker 一起发布。
+部署用 `pnpm release`（或 `cd backend && cf deploy`）：构建前端后把资产 + API 作为单一 Worker 发布。
 
 需要配置以下 Cloudflare 资源：
 
