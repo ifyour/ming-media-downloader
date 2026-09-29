@@ -10,12 +10,12 @@
 ## Commands
 
 ```sh
-pnpm dev              # concurrently starts Vite (:5173) + wrangler dev (:8787)
+pnpm dev              # concurrently starts Vite (:5173) + cf dev (:8787)
 pnpm build            # tsc -b (typecheck both tsconfigs) then vite build
 pnpm lint             # eslint .
 pnpm preview          # vite preview
 pnpm deploy           # backend then frontend
-pnpm deploy:backend   # wrangler deploy worker/src/index.ts --name ming-media-downloader-api
+pnpm deploy:backend   # cf deploy (from worker/, uses worker/cloudflare.config.ts)
 pnpm deploy:frontend  # build → wrangler pages deploy dist --project-name ming-media-downloader
 ```
 
@@ -27,7 +27,7 @@ pnpm deploy:frontend  # build → wrangler pages deploy dist --project-name ming
 - `erasableSyntaxOnly` is on: no enums, no namespaces, no parameter properties.
 - TypeScript 6.0 — verify compatibility before upgrading any TS-adjacent dependency.
 - LightningCSS CSS transformer targets Safari 11+ (iOS 12+). Not PostCSS — don't add PostCSS plugins/ config.
-- The Worker requires KV namespace `MMD_CACHE` (hardcoded ID in `wrangler.toml`). Without it, cache and share features fail.
+- The Worker requires KV namespace `MMD_CACHE` (hardcoded ID in `worker/cloudflare.config.ts`; `worker/wrangler.toml` kept in sync for vitest-pool-workers). Without it, cache and share features fail.
 - The Pages Function hardcodes the Worker URL — update if deploying to a different account/domain.
 - PWA is enabled in dev mode (`devOptions.enabled: true`), so `dev-dist/` is generated.
 - `pnpm-workspace.yaml` declares `allowBuilds` for esbuild, sharp, workerd — needed for `pnpm install` and wrangler.

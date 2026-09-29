@@ -99,9 +99,12 @@ Worker tests run in the Miniflare (workerd) runtime with real Cloudflare Workers
 
 ## Project Structure
 
+Quick map: **`src/` = frontend · `worker/` + `functions/` = backend · `tests/` mirrors both · the rest is build artifacts and configs.**
+
 ```
 ming-media-downloader/
-├── src/                          # Frontend source
+│  ── FRONTEND ──
+├── src/                          # Frontend source (React SPA)
 │   ├── main.tsx                  # React entry point
 │   ├── App.tsx                   # Root component (state + logic)
 │   ├── AppContent.tsx            # Presentational component (layout)
@@ -110,15 +113,13 @@ ming-media-downloader/
 │   ├── history.ts                # Download history (localStorage)
 │   ├── hooks.ts                  # Custom hooks
 │   ├── utils.ts                  # Utility functions
-│   ├── components/
-│   │   ├── VideoOptions.tsx      # Video format selection
-│   │   ├── ImageOptions.tsx      # Image download UI
-│   │   ├── PWAProvider.tsx       # PWA update management
-│   │   └── PWAUpdatePrompt.tsx   # New-version prompt
+│   ├── components/               # UI components
 │   └── index.css                 # Global styles + Geist design tokens
-├── worker/                       # Cloudflare Worker backend
+│
+│  ── BACKEND ──
+├── worker/                       # Cloudflare Worker (pure API)
 │   ├── src/
-│   │   ├── index.ts              # Entry point + routing
+│   │   ├── index.ts              # Entry point + routing (/api/parse, /api/download...)
 │   │   ├── parse.ts              # Parse orchestration
 │   │   ├── rednote.ts            # Xiaohongshu parser
 │   │   ├── twitter.ts            # X/Twitter parser
@@ -126,12 +127,26 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV cache
 │   │   ├── types.ts              # Backend type definitions
 │   │   └── utils.ts              # CORS / JSON helpers
-│   └── wrangler.toml             # Worker configuration
-├── functions/api/[[path]].ts     # Pages Function (proxies to the Worker)
+│   ├── cloudflare.config.ts      # cf deploy/dev config (KV binding MMD_CACHE)
+│   └── wrangler.toml             # Kept in sync for vitest-pool-workers
+│
+├── functions/api/[[path]].ts     # Pages Function: production reverse proxy /api/* → Worker
+│
+│  ── SHARED ──
+├── tests/
+│   ├── frontend/                 # jsdom tests (mirrors src/)
+│   └── worker/                   # workerd tests (mirrors worker/src/)
 ├── public/                       # Static assets (icons, etc.)
-├── vite.config.ts                # Vite configuration
-└── package.json                  # Frontend dependencies
+├── scripts/                      # Build helpers (PWA icon generation)
+├── vite.config.ts                # Frontend build (dev proxy /api → :8787)
+├── vitest.frontend.config.ts     # Frontend test config
+├── vitest.worker.config.ts       # Worker test config
+├── tsconfig.app.json             # Frontend typecheck
+├── worker/tsconfig.json          # Backend typecheck
+└── package.json                  # Script entry for both ends (pnpm dev/deploy/test)
 ```
+
+The two deployables are independent: `pnpm deploy:backend` (Worker, from `worker/`) and `pnpm deploy:frontend` (Pages, static `dist/`). Note: `cf` does not support legacy Pages deploy — the frontend still uses `wrangler pages deploy`.
 
 ## Deployment
 

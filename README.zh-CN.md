@@ -99,9 +99,12 @@ Worker 测试在 Miniflare（workerd）运行时中执行，支持 `HTMLRewriter
 
 ## 项目结构
 
+快速地图：**`src/` = 前端 · `worker/` + `functions/` = 后端 · `tests/` 跟着被测对象分 · 其余是构建产物和配置。**
+
 ```
 ming-media-downloader/
-├── src/                          # 前端源码
+│  ── 前端 ──
+├── src/                          # 前端源码（React SPA）
 │   ├── main.tsx                  # React 入口
 │   ├── App.tsx                   # 根组件（状态 + 逻辑）
 │   ├── AppContent.tsx            # 展示组件（布局）
@@ -110,15 +113,13 @@ ming-media-downloader/
 │   ├── history.ts                # 下载历史（localStorage）
 │   ├── hooks.ts                  # 自定义 Hooks
 │   ├── utils.ts                  # 工具函数
-│   ├── components/
-│   │   ├── VideoOptions.tsx      # 视频格式选择
-│   │   ├── ImageOptions.tsx      # 图片下载 UI
-│   │   ├── PWAProvider.tsx       # PWA 更新管理
-│   │   └── PWAUpdatePrompt.tsx   # 新版本提示
+│   ├── components/               # UI 组件
 │   └── index.css                 # 全局样式 + Geist 设计 Token
-├── worker/                       # Cloudflare Worker 后端
+│
+│  ── 后端 ──
+├── worker/                       # Cloudflare Worker（纯 API）
 │   ├── src/
-│   │   ├── index.ts              # 入口 + 路由分发
+│   │   ├── index.ts              # 入口 + 路由分发（/api/parse、/api/download…）
 │   │   ├── parse.ts              # 解析编排
 │   │   ├── rednote.ts            # 小红书解析器
 │   │   ├── twitter.ts            # X/Twitter 解析器
@@ -126,12 +127,26 @@ ming-media-downloader/
 │   │   ├── cache.ts              # KV 缓存
 │   │   ├── types.ts              # 后端类型定义
 │   │   └── utils.ts              # CORS / JSON 工具
-│   └── wrangler.toml             # Worker 配置
-├── functions/api/[[path]].ts     # Pages Function（代理到 Worker）
+│   ├── cloudflare.config.ts      # cf 部署/开发配置（KV 绑定 MMD_CACHE）
+│   └── wrangler.toml             # 为 vitest-pool-workers 保留，需同步维护
+│
+├── functions/api/[[path]].ts     # Pages Function：生产环境把 /api/* 反代到 Worker
+│
+│  ── 共用 ──
+├── tests/
+│   ├── frontend/                 # jsdom 测试（对应 src/）
+│   └── worker/                   # workerd 测试（对应 worker/src/）
 ├── public/                       # 静态资源（图标等）
-├── vite.config.ts                # Vite 配置
-└── package.json                  # 前端依赖
+├── scripts/                      # 构建辅助（PWA 图标生成）
+├── vite.config.ts                # 前端构建（开发时 /api 代理到 :8787）
+├── vitest.frontend.config.ts     # 前端测试配置
+├── vitest.worker.config.ts       # Worker 测试配置
+├── tsconfig.app.json             # 前端类型检查
+├── worker/tsconfig.json          # 后端类型检查
+└── package.json                  # 两端共用脚本入口（pnpm dev/deploy/test）
 ```
+
+两个部署目标是独立的：`pnpm deploy:backend`（Worker，在 `worker/` 内执行）和 `pnpm deploy:frontend`（Pages，静态 `dist/`）。注意：`cf` 不支持 legacy Pages 部署，前端仍使用 `wrangler pages deploy`。
 
 ## 部署
 
