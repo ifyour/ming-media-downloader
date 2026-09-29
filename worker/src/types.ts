@@ -1,5 +1,6 @@
 export interface Env {
   MMD_CACHE: KVNamespace;
+  ASSETS: Fetcher;
   MYBROWSER?: unknown;
 }
 

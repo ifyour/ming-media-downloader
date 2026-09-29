@@ -143,6 +143,12 @@ export default {
       return errorResponse('Method not allowed', 405);
     }
 
-    return jsonResponse({ message: 'Social Media Video Downloader API' });
+    if (path.startsWith('/api/')) {
+      return errorResponse('Not found', 404);
+    }
+
+    // Non-API requests fall through to static assets (SPA);
+    // asset-matching paths (/, /assets/*, sw.js...) are served before the Worker runs.
+    return env.ASSETS.fetch(request);
   },
 };
