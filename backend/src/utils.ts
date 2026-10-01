@@ -62,7 +62,7 @@ export async function resolveUrl(url: string): Promise<string> {
     cleanUrl = 'https://' + cleanUrl;
   }
 
-  if (cleanUrl.includes('xhslink.com') || cleanUrl.includes('doubleclick.net') || cleanUrl.includes('t.co')) {
+  if (cleanUrl.includes('xhslink.com') || cleanUrl.includes('xhslink.cn') || cleanUrl.includes('doubleclick.net') || cleanUrl.includes('t.co')) {
     const res = await fetch(cleanUrl, {
       method: 'GET',
       redirect: 'manual',

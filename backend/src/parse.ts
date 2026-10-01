@@ -12,7 +12,7 @@ export async function parseMediaUrl(url: string, env: Env): Promise<MediaResult>
   const parsedUrl = new URL(resolvedUrl);
   const host = parsedUrl.hostname.toLowerCase();
 
-  if (host.includes('xiaohongshu.com') || host.includes('rednote.com') || host.includes('xhslink.com')) {
+  if (host.includes('xiaohongshu.com') || host.includes('rednote.com') || host.includes('xhslink.com') || host.includes('xhslink.cn')) {
     return await parseRednote(resolvedUrl, env);
   } else if (host.includes('twitter.com') || host.includes('x.com')) {
     return await parseTwitter(resolvedUrl);
