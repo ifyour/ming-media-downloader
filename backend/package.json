@@ -9,5 +9,8 @@
     "typescript": "^5.0.2",
     "vitest": "^4.1.9",
     "wrangler": "^4.142.0"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.4.0"
   }
 }
