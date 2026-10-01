@@ -1,7 +1,7 @@
 {
   "name": "ming-media-downloader",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "browserslist": [
     "iOS >= 12",
